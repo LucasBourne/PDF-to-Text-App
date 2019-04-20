@@ -32,7 +32,12 @@ namespace WpfApp1
             //string text = Result.Text;
             string filePath = @".\Input\DOC01100.pdf";
             string text = PerformOCR(filePath);
-            UpdatesListBox.Items.Add(text);
+            WriteText(WriteOutput(filePath, text));
+        }
+
+        private void WriteText(string text)
+        {
+            UpdatesListBox.Items.Add(DateTime.Now.ToString("HH:mm:ss") + ": " + text);
         }
 
        IronOcr.AdvancedOcr Ocr = new IronOcr.AdvancedOcr()
@@ -54,6 +59,18 @@ namespace WpfApp1
         {
             var result = Ocr.Read(filePath);
             return result.Text;
+        }
+
+        private string WriteOutput(string filePath, string text)
+        {
+            string fileName = System.IO.Path.GetFileNameWithoutExtension(filePath);
+
+            using (StreamWriter writer = new StreamWriter(System.IO.Path.Combine("./Output", fileName) + ".txt"))
+            {
+                writer.Write(text);
+                writer.Flush();
+            }
+            return ("File '" + fileName + "' successfully exported");
         }
     }
 }
