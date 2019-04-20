@@ -8,7 +8,8 @@
         Title="MainWindow" Height="450" Width="590.757">
     <Grid>
         <Button x:Name="OCR_Button" Content="OCR" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="75" Click="OCRButton_Click"/>
-        <ListBox x:Name="UpdatesListBox" HorizontalAlignment="Left" Height="374" Margin="10,35,0,0" VerticalAlignment="Top" Width="563" IsSynchronizedWithCurrentItem="True"/>
+        <ListBox x:Name="UpdatesListBox" HorizontalAlignment="Left" Height="98" Margin="10,35,0,0" VerticalAlignment="Top" Width="563" IsSynchronizedWithCurrentItem="True"/>
+        <TextBox x:Name="texx" HorizontalAlignment="Left" Height="177" Margin="10,138,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="563"/>
 
     </Grid>
 </Window>
