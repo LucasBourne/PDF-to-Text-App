@@ -30,7 +30,8 @@ namespace WpfApp1
         {
             //var Result = Ocr.Read(@".\Input\DOC01100.pdf");
             //string text = Result.Text;
-            string filePath = @".\Input\DOC01100.pdf";
+            var pdfFiles = Directory.GetFiles("./Input", "*.pdf");
+            string filePath = pdfFiles[0];
             string text = PerformOCR(filePath);
             WriteText(WriteOutput(filePath, text));
         }
