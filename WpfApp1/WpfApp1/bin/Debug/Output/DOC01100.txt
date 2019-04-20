@@ -1,0 +1,5041 @@
+ 
+
+ 
+
+_ii' ___' MUSS
+
+ 
+
+DOCUMENTATION FACILITIES
+
+ 
+
+This section provides facilities for text processing, drawing flowchans and automatic program
+generation from encoded flowchart descriptions.
+
+UNIVERSITY OF MANCH ESTER
+
+ 
+
+
+
+
+DOCOII
+DOC021
+DOCO31
+DOCO41
+DOCOSI
+DOC061
+DOCO71
+DOC081
+
+DOC091
+
+1. Volume 3 CONTENTS
+
+Descriptive Text Generation
+
+Common Procedures for Flib and Draw
+FLIP (Form Linear Program)
+
+Batch Flowchart Drawing
+
+Pen Plotter Device Driver
+
+Diablo Device Driver
+
+Lineprinter/VDU Device Driver
+
+Interactive Flowchart Inspection and Editing
+
+Genisco Display Driver
+
+ 
+
+
+
+
+MUSS
+
+DOCO1 ll,
+
+MANCHESTER UNIVERSITY - CONFIDENTIAL
+
+ 
+
+
+
+
+ 
+
+use
+
+ 
+
+muss DOCUMENTATION l
+
+ooco11 t-1
+
+UPDATE LEVEL PAGE
+
+1. DOCUMENTATION IMPLEMENTATION DESCRIPTION
+
+Section 1 Version 1
+Section 1.1 Descrigtive Text Generation
+
+ 
+
+General Descrigtion
+
+This sectium provides a set of simple word processing facilities. Tht main one TEXT produces well
+formatted layout from an encoding that intarsperses warning sequences with the text.
+
+ 
+
+
+
+
+“>33
+W;
+
+ 
+
+ 
+
+MUSS DOCUMENTATION _ b-t
+DOCO1 1 UPDATE LEVEL ma:
+
+2. Interfaces
+
+The interface assumed by this section is the MUSS library i.e., it requires commands for manipulating
+input and output streams and for character input output.
+
+2.1. Hardware Interface
+
+Various output devices suitable for document production are assumadIThase must all have a full visual
+character set. Linaprinters and terminals are suitable but more sophisticated printers such as Diablo
+and Dot Matrix are altttrttattartad for. These, must havalthe following additional. characteristics.
+
+variable character size
+fractional LF
+
+fractionai reverse LF
+underlining.
+
+2.2. Softwa re Interface
+
+" TEXT lPlf'UT.FtLEAUTPUTflui,Ou'rPU'r,DEvum
+
+_ This procedure copies text from 'an input stream generating a layout suited to-the specified type of
+
+output. device.
+
+tl SPELL (DECTIONARY.FILE.NAME.TEXT.FILE.NAME)
+
+This procedures checks ail words in the '1ext file' against all words in the dictionary file, producing
+a list of all words not found in the ditttiortaty on the tturrttrttftls, which may be printed. edited or added
+_ to the dictionary as apprrrpriattr. SPELL has not yet been implemented.
+
+
+
+
+ISSUE 9 . MUSS DOCUMENTATION 1 3.1
+DOCO1 1 won: LEVEL PAGE
+
+3. Implementation
+
+3.1. Outline of Operation
+
+The basic mode of operation of TEXT involves copying words from input text to output, starting
+newlines/newpages as necessary to avoid splitting words across lines and spacing the words across
+a line to right justify them. If a warning character ('@') is encountered in the input text, the characters
+which follow are decoded causing a modification to the basic mode of operation. Facilities controlled
+in this way include indentation; margin and tabulation settings, underlining, centring, forced
+newlines/peges and gaps for diagrams etc. Tables and diagrams can be built up by this means. In
+addition library procedures are called directly when ''tiire'' is detected, allowing fiowcharts for example
+to be generated within a document.
+
+3.2. Data Structures
+
+ 
+
+3.2.1. TEXT
+
+DEVNAMES a vector of 32-bit words containing the names of the output devices.
+
+LSIZES e vector of integers specifying the number of characters on a line for each device.
+
+PSIZES. a vector of integers specifying the number of lines/pege for each device.
+
+SPECIAL e vector of bytes indicating, for each device. whether it has special hardware
+characteristics, e.g. 'DS', 'VSP‘.
+
+INITSEQ- a vector of bytes used to initialise DIABLO type devices.
+
+HDFORM a vector of bytes describing the structure of the numbers o - 9 and letters A ->
+
+2 as produced by the HEADER facility (@H).
+
+BUFF a vector of bytes which is used to buffer each line of output..
+
+ 
+
+
+
+
+ 
+
+ 
+
+TABUST
+
+FAG EMSG
+PAGEMSGZ
+CHAPSTR
+CHAPTER
+
+BUFFPTFI
+
+LPOS
+
+DEVNO
+
+ULSW
+
+INSTREAM
+OUTSTREAM
+OLDJNSTREAM
+OLD.OUTSTREAM
+CONTSTR
+
+DI DSTR _
+PAGEGAP
+
+BGAP
+MAP-
+
+BIND
+
+MARGIN-
+RMARON _
+
+NDENT
+
+LSIZE
+
+MUSS DOCUMENTATION B-2
+DOCO 1 1 urban LEVEL me:
+
+a vector of integers indexed by LPOS specifying. for each output character
+position, the number of spaces to be output in order to advance to the next
+tabulation stop.
+
+a byte vector used to hold the general heading output at the top of each new page.
+an integer holding the number of bytes in the heading
+
+a byte vector holding the Current chapter heading-
+
+an integer holding thauthapter number.
+
+an integer indexing the output buffer BUFF, specifying the position of the last
+character placed in the buffer.
+
+an integer specifying the current character position on the output device,
+equivalent to BUFFPTR. -
+
+an integer indexing the current device. " specified in DEVNAMES.
+
+a hit significant word indicating the current underline status. Bit O Ltr.'." character
+underline. Bit 1 = ward underiine. Bit 2 = line underline.
+
+an integer specifying the input stream. asedei'ated with the input text.
+
+an integer specifying the output stream associated with the output text.
+
+an integer specifying the input stream seiected prior to entering TEXT.
+
+an integer specifying the output stream selected prior to entering TEXT.
+
+an integer specifying the output stream number for the contents file..
+
+an integer specifying the output stream number for the index file,
+
+an integer specifying the number of blank lines to be output at the start of a page.
+an integer variabie giving the number of lines to be output at the start of a block.
+
+an integer variable giving the number of newlines to be output at the start of it
+section.
+
+an integer variable giving the number of spaces of indentation to be output at the
+sum of a new paragraph.
+
+an integer variable giving the number of spaces to be output for the margin..
+en integer specifying the number of spaces in the right hand margin.
+
+an integer variable giving the number of spaces to be output for indentation
+feilewing centring.
+
+an integer variable initialised from LSIZESBDEVNO] giving the number of
+characters on e tine. _
+
+ 
+
+
+
+
+ISSUE 9
+
+PSiZE
+
+spaces;
+
+HIGHLIGHT
+PCOUNT
+LCOUNT
+SSW
+
+DATE
+
+INDENT
+HDCHAR
+CH,
+
+AT
+
+UP
+
+DOWN
+TABCH
+USERFORM
+U.F.DIAG _
+
+DISPLNS
+
+SAVPOS1, 2. 3
+
+SAVPLL 2, 3
+
+MUSS DOCUMENTATION _ 3-a
+
+DOCO1 1 - mum nee
+
+an integer variable initialised from PSIZESUJEVNO] giving number of lines on a
+page.
+
+an integer variable, initieiised from SPECIALIDEVNO], indicating whether output
+device has special characteristics.
+
+bit o indicates variable space capability.
+
+bit 1 indicates underline capability,
+
+bit 2 indicates haif line feed capability.
+
+an integer flag which when positive indicates highlighting of the current line.
+an integer giving the page count.
+
+an integer giving the number of lines output on the current page.
+
+an integer indicating that a section heading has been specified. Resat by @B.
+
+an integer which indicates whether or net the date Shouid appear at the feet of
+each page.
+
+an integer used to hold the current indentation position.
+a byte holding the character to he used in generating headings.
+a byte variable used t6 held the character currently being processed.
+
+a byte variable used to hold the character currently being used as the warning
+sequence character. tg is the default).
+
+a byte variable used to hold the character being used as-the superscript character.
+(Default 1).
+
+a byte variable used to hold the character being used as the subscript character.
+(Defeutt i).
+
+a byte variabte used to hold the character being need as the tabutetihn character.
+{Default 96).
+
+an integer indicating whether the eurrent line is user formatted (bit O) and whether
+it is a heading (bit I), -
+
+an. integer indicating the- number of lines still required. for outputting a user
+formatted diagram.
+
+an integer specifying the number of lines of displaced epece/text awaiting output.
+A positive value indicates diSpteced space, a negative one displaced text.
+
+32 bit integers used to hold values of the input stream pointer - used during
+storage 8: output of displaced text.
+
+as above but holding the page. line number of the input stream.
+
+ 
+
+
+
+
+ 
+        
+     
+
+ISSUE s MUSS DOCUMENTATION
+
+000011
+
+3.3. Special Notes
+
+None.
+
+ 
+
+
+
+
+muss DOCUMENTATION _ _ , 4.1
+DOCO1 1 UPDNI’ELEVEL am:
+
+4. Compile Jobs
+
+The jobs presented here comprise two compiles for the VAX and one for the PDP1 1. The VAX jobs
+compile alt the documentation software {'I‘EXT.SPELL,LIST.INDEX,LIST.0|CT,LIST.MOD.FLIP,DRAW1
+together whiie the PDP1 1 job ttross-compiles only ion VAX for PDPt I) the elements contained in this
+module fTtixT,SPEu..LlSTotDEX,LlStDlCr,LlSTMOD). The first of the VAX jobs allows
+ttross-compilation from one version of the system to the other, the second will produce a private
+library catied DOCV in the directory of the calling process for test and development purposes.
+
+_
+
+4.1. Cross-compile Job for VAX.
+
+This job. allows all the documentation software iTEXT,SPELLLlST.lNDEX,
+LlST.DKrrIlSTM0D.FLIP,DRAW1 to be cross-compiled from one version to the other. The '?' symbol
+specified in some of the filenames is a substitute for the version number being compiled to, and will
+be altered by the actual compile jobs under MUSM to a 1 or 2 prior to entry..
+
+::BEGtN COMPDOC.
+
+DEFINEOUTPUT 0 0003?LOG 56200
+LIB MUTLXS
+
+LIB MUSLX
+
+LIB L1802X3
+
+LIB VADIR?'
+
+ED DOCOZt/MUBS
+
+(FDA':MU6 J)
+
+E
+
+FLIP o 1
+
+130002
+
+e'e-Dl 4 O
+
+MUSE. 0 DOCS? 96405 "
+
+*TLSEG O 960 %7FEA0000 %Fit0 o;
+eTLSEG t 760 o $117)!) ty;
+{11.856 2 so 56380000 %F{7}D 0:
+eTLSEG 3 so 96380000 %F(7ID tk
+#11856 4 so 96330000 %F(71D lk
+*TLLOAD 1 5:
+
+*TLLOAD 2 sr
+
+iI-TLLOAD 3 2;
+
+*TLLOAD 4 a;
+
+*INFORM 962400:
+
+ 
+
+
+
+
+ 
+
+ISSUE 9
+
+ 
+
+*iSELECTINPUT 4
+ENDINPUT 4
+
+ED 006031/MU65
+iFD?r,MU6 ?l
+
+E
+
+FLIP O 1
+
+DOC03
+
+**01 4 o
+
+MUSL o 0 %COO
+*INFORM %2400;
+4reSELECTlNPUT 4
+ENDINPUT 4
+
+ED DOCO41/MUGS
+IFD?::MU6 "
+
+E
+
+FLIP 0 1
+
+00004
+
+**DI 4 o
+
+MUSL o 0 96000
+*tNFORM 962400:
+4reSthtiCTlNPUT 4
+ENDINPUT 4
+
+ED DOCOSVMUSS
+tFDh:MU6 "
+
+E
+
+FLIP O 1
+
+DOCOE
+
+41"")! 4 0
+
+MUSL O 0 96000
+4FmtFORM. 962400:
+4reSELECTINPUT 4
+ENDINFUT 4
+
+ED 000061/MU63
+(FD?::MU6 n
+
+E
+
+FLIP 0 1
+
+DOCOB
+
+eit-Dl 4 tt
+
+MUSLO 0 96000-
+etNFOFlM 962400:
+ei-SELECTINPUT 4
+ENDINPUT 4
+
+ED DOCOH/MUBS
+{FD?::MUB "
+
+E
+
+FLIP O 1
+
+DOC07 _
+
+“I'D! 4 O
+
+MUSL 0 o 96000
+*iNFORM $62400:
+**SELECTINPUT 4
+ENDINPUT 4
+
+ED DOCOBt/MUBS
+(FD/zzMUG /)
+
+E
+
+muss DOCUMENTATION
+DOCO1 1
+
+UPDATE LEVEL
+
+4-2
+ems
+
+
+
+
+ 
+
+fees 9 muss DOCUMENTATION t 4.-3
+DOCO1 1 UPDATE LEVEL PAGE _
+
+FLIP 0 1
+
+DOCOB
+
+-IHt~Di_4 0
+
+MUSL 0 0 %C00
+**SELECT1NPUT 4
+ENDINPUT 4
+
+ED DOCOQt/MUSS
+{FD/::MU6 /)
+
+E
+
+FLIP 0 1
+
+00009
+
+aHt-Dl 4 o
+
+MUSL o o 96000
+ireSELECTINPUT 4
+ENDiNPUT 4
+
+ED EDT021/MU6S
+(FD/::MUB /)
+
+E
+
+FLIP 0 1
+
+EDT02
+
+*e-DI 4 0
+
+MUSL 0 0 %cotr
+**SELECTINPUT 4
+ENDINPUT 4
+
+ED DOCO1 VMUSS
+(FDA:MU6 /)
+
+E
+
+FLIP 0 1
+
+00001
+
+Hi0! 4 0
+
+MUSL o 0 96800
+4FeSELECTINPUT 4
+ENDINPUT 4
+MERGEDIH VADIR? 0003? VAXDIR?
+STOP
+
+::END COMPDOC'
+
+4.2. Private Library Compile Job for VAX.
+
+This compiles all the» Documentation software (TEXT,SPELL.L£ST.!NDEX.
+L1ST.01CT,LIST.M00.FLIP.0RAW,DisPLAY,SCROLLLEVELFLEQXEDNED) inte a private library
+(00010 in the directow of the ceiling process.
+
+:BEGIN COMPDOCP
+
+DEFINEOUTPUT 0 DOCPLOG 96200
+
+ED DOCOZi/MUBS. _
+
+tFD?::MU6 fl
+
+E
+
+FLIP 0 1
+
+00002
+
+eel)! 4 0
+
+MUSL 0 000V 96405 ts
+
+*TLSEG 0 960 16100000 516200000 o;
+
+#11356 1 960 0 9611710 0;
+
+ 
+
+
+
+
+MUSS DOCUMENTATION 4-4
+DOCO1 1 UPDATE LEVEL mes
+
+ 
+
+*TLSEG 2 $60 $63800“) %Fl7}D th
+*TLSEG 3 960 56330000 %Fi7)D 0;
+'TLSEG 4 960 96330000 %Fi71D 0;
+*TLLOAD 1 5:
+*TLLDAD 2 3;
+"LLOAD 3 2;
+*TLLOAD 4 tr;
+*INFOFIM 962400:
+eeSELECTlNPUT 4
+ENDINPUT 4
+
+ED 000031/MUBS
+{FD?::MU6 ?)
+
+E
+
+FLIP 0 1
+
+DOCO3
+
+*i-Di 4 o
+
+MUSL 0 0 96000
+*INFORM $62400:
+_eeSELiiCTlNPUT 4
+ENDiNPUT 4
+
+ED 00004t/MU03
+{FD?::MU8 ?)
+
+E
+
+FLIP O 1
+
+D0004
+
+*i-Dl 4 O
+
+MUSL 0 0 96600
+4HNFORM %240th
+4rarSELECTWIPUT 4
+ENDINPUT 4
+
+ED DOCOS‘VMUBS
+(FD?::MU6 ?1
+
+E
+
+FLIP 0 1
+
+00005
+
+9reDI 4 0
+
+MUSL 0 0 16000
+*INFORM 962400:
+**SELECT1NPUT 4
+ENDINFUT 4
+
+ED DOCOSUMUBS
+(FD?::MUB ?)
+
+E
+
+" 0 1
+
+00008
+
+*at-Di 4 0
+
+MUSL 0 tt 96000
+"IFORM 962400:
+4t4rSELECTlNPUT 4
+ENDiNPUT 4
+
+ED DOCOH/MUSS
+{FD?::MU8 ?)
+
+ 
+
+ 
+
+ 
+
+FLIP tr 1
+00007 b
+
+ 
+
+
+
+
+ 
+
+MUSS DOCUMENTATION 4-5
+DOCO1 1 _ UPDATE LEVEL, mee-
+
+**01 4 0
+MUSL 0 o 96000
+e1NFORM 96-2400:
+eesiSLtiCTlNPUT 4
+ENDINPUT 4
+
+ED DOCOSVMUGS
+(FDA".MU6 /)
+
+E
+
+FLIP o 1
+
+00008
+
+Hit)! 4 0
+
+MUSL O 0 9.6000
+*1NFORM 962400:
+FFStiLECTtNPUT 4
+ENDINPUT 4
+
+ED DOCOSVMUBS
+{FD/::MU6 n
+
+E
+
+FLIP 0 1
+
+00009
+
+41-3101 4 0
+
+MUSL 0 0 96000
+*tNFDRM 962400:
+4beSELECTlNPUT 4 _
+ENDINFUT 4
+
+ED EDTOZT/MUBS-
+(FDA:MU6 /)
+
+E
+
+FLIP o 1
+
+EDT02
+
+aHtDt 4 o
+
+MUSL 0 0 96000
+*INFOHM 962400:
+e-ISELECTINPUT 4
+ENDINPUT 4
+
+ED 000011/MUBS
+(FD/::MU6 I}
+
+E
+
+FLIP O 1
+
+00001
+
+ei-DI 4' 0
+
+MUSE. 0 o 96800
+4rtSELECTINPUT 4
+ENDiNPUT 4
+STOP-
+
+::END COMPDOCP-
+
+4.3. Compile Job for POP11ion VAX).
+
+This job cempiies TEXT ,SPEt.L.USTJNDEx, USTDICT and L13T.MOD for downloading to a PDP11.
+it produces a code file PDP16 and a monitoring filer TEXTPDPLttG.
+
+::-BEGtN COMWEXTPDP
+
+DO 0 TEXTPDPLOG 96200
+
+ 
+
+
+
+
+MUSS DOCUMENTATmN
+00001 1
+
+ 
+
+LIB MUSLJ/MUSM
+LIB MUTLJ/MUSM
+CREATESEGMENT 57 9610000
+CREATESEGMENT 58 % 10000
+CREATESEGMENT 59 %1000o
+L13 MURDJ/MUSM
+LIB FINDN1 1/MUSM
+CREATESEGMENT 20 9610000
+LIBRARY PDPDIR/MUSM
+'. ED 00001 I/MUGS
+_1 (FD/nPDP /)
+i: E
+:,' FLIP 0 1
+
+DOCO1
+
+M 4 0
+
+TL 4
+
+TLDIRECTORY 5
+
+TLSEG 966000 962000 32
+_ TLSEG 96100 961FAO -1
+
+TLSEG 966000 968000 -2
+
+TLSEG 968000 %8000 -2
+
+TLLOAD 1 5
+
+TLLOAD. 2 2 ' _
+
+TLLOAD 3 6 h
+
+MUSL
+
+*INIT 5;
+
+4reSELECTMPUT 4
+
+ENDINPUT 4
+
+CHANGESIZE 32 966000
+
+FILE PDN6 0 32
+
+COPYFILE o STRO*
+
+STOP
+
+::END COMPTEXTPDP
+
+ 
+
+ 
+
+ 
+
+4.4. Private Library Compile of FLIP for VAX.
+
+This compiiea FLIP only into a private library (DOCFLIP) in thsrdiraetory of the calling process.
+:BEGIN COMPFLIP3
+
+DEFINEOUTPUT o FUPSLOG 96200
+
+ED 00002 1/MUBS
+
+{FD?::MUB "
+
+E
+
+FLIP 0 1
+
+00002
+
+um 4 0
+
+M081. 0 DOCFUPS 96405 16
+
+*TLSEG 0 so 96100000 96200000 tr;
+*TLSEG 1 960 0 96F(7)D O;
+
+*TLSEG 2 960 96380000 96Fl?)0 O;
+*TLLOAD 1 ti;
+
+-1_l-TLLOAD 2 3;
+
+*INFORM 962400:
+
+*l-SELECTINPUT 4
+
+ 
+
+ 
+
+
+
+
+ISSUE 9 MUSS DOCUMENTATION 4-7
+DOCO1 1 muslmva PAGE
+
+ENDINPUT 4
+
+ED DOC031/MUGS
+(FD?::MU6 ?)
+
+E
+
+FLIP 0 1
+
+DOC03
+
+**Dl 4 0
+
+MUSL 0 o 96800
+*INFORM 962400:
+4r4FSELECTINPUT 4
+ENDINPUT 4
+
+STOP
+
+::END COMPFLIP3
+
+4.5. Cross-compile of FLIP for MC68000 on VAX.
+
+This compiles FUPdNPUT.TlTLE and 1NPUT.CHART for MC68000 in a file called FLIPS producing a
+log-file FLIPSLOG. ,
+::BEGIN COMPFLIPS FOR MC68000
+DEFINEOUTPUT O FLIPSLOG 96200
+LIB MUTLX5/MUSM
+
+LIB MUSLX/MUSM
+
+L18 LlBOZXS/MUSM
+
+LIB VLIBDIRS/MUSM
+
+ED DOC021/MU6S
+
+(FD/::MU6 /)
+
+E
+
+FLIP o 1
+
+DOCO2
+
+*4101 4 o
+
+MUSL O FLOPS 96705 16
+*i-TLSEG O 960 9600140000 96F(8) O
+i-I’TLSEG 1 960 O 96F(7)D o
+**TLSEG 2 960 96C0000 96F(7)D O
+**TLLOAD 1 5
+
+*i-TLLOAD 2 3
+
+*INFORM 962400;
+{*SELECTINPUT 4
+
+ENDINPUT 4
+
+ED DOC031/MUBS
+(FD?::M068000?)
+
+E
+
+FLIP o t
+
+00003
+
+“+01 4 O
+
+MUSL O 0 96800
+
+*INFORM 962400;
+4reSELECTINPUT 4
+
+ENDINPUT 4
+
+TRANDIR FLOPS FLIPS 0 964000
+DEL FLOPS
+
+DEL FLOP500
+
+STOP
+
+ 
+
+ 
+
+
+
+
+  
+
+MUSS DOCUMENTATION
+DOCO1 1
+
+ 
+   
+    
+  
+  
+   
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+   
+  
+  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+  
+
+::END COMPFLIPS
+
+4.6. Cross-compile of TEXT for MC68000 on VAX.
+
+This compiles TEXT,SPELL.LIST.DiCT and LISTJNDEX for MC68000 in a file called TEXTS producing
+a log-file TEXTSLOG.
+
+::BEGIN COMFTEXTE FOR MC68000
+DEFiNEOUTPUT o TEXTSLOG %200
+LIB MUTLXE/MUSM
+
+LIB MUSLX/MUSM
+
+LIB LtB02XtVMtJSM
+
+LIB VLIBDIRii/MUSM
+
+ED 000011/MU63
+
+{FD/::M068000 I)
+
+E
+
+FLIP 0 1
+
+DOCO1
+
+tei91 4 0
+
+MUSL t) TOXT5 96305 16
+
+*i-TLSEG 0 960 9600144000 %Fi8) 0
+4FtTLSEG t 960 0 96F(7}D o
+*i-TLSEG 2 960 9600000 %F{7)D 0
+**TLSEG 3 so 9660000 96F(7)D O
+**TLLOA0 t 6
+
+4reT'1.,Lt3AD 2 2 _ 1
+**TLLOAD 3 6
+
+*INFORM 962400:
+
+4reSELetimNPUT 4
+
+ENDINPUT 4
+
+TRANDIR TOXTB TEXTS o 964000
+DEL TOXTS
+
+DEL TOXTSOO
+
+STOP
+
+::ENO COMPTEXTE
+
+ 
+
+1
+
+4.7. Crass~compile of DRAW for MC68000 on VAX.
+
+This compilas DRAWHor LPT and PLT only) and FLED for MC68000in a file cailed DRAWS producing
+
+a Iartr-4ilta DRAWSLOG.
+
+::BEGIN CDMPDRAWS FOR MC68000
+
+DEFINEOUTPUT D DRAWELOG 96200
+
+LIB MUTLXtVMUSM
+
+LIB MUSLX/MUSM
+
+LIB LlBOZXE/MUSM
+
+LIB VLIBDIRS/MUSM
+
+LIB EDTZE/MUSM
+
+ED DOCOZUMUBS
+
+{FD/::MUB n
+
+E "
+FLIP o 1 l
+00002
+
+ 
+
+
+
+
+155112 9 muss DOCUMENTATION l t-9
+DOCO1 1 ummguva PAGE
+
+ee0l 4 0
+
+MUSL 0 DRAWS 96705 16
+**TLSEG 0 960 9600118000 %F00 o
+HTLSEG 1 990 o %Ft71D o
+*iTLSEG 2 960 9600000 96F£710 0
+**TLSEG 3 960 9600000 96F(7)0 o
+HTLSEG 4 960 9600000 1131:1710 0
+teTLLOAD t 5
+
+*i-TLLOAD 2 3
+
+*a-TLLOAD 3 2
+
+4*TLL0A0 4 6
+
+*INFORM 962400:
+4r4rSELECTtNPUT 4
+ENMNPUT 4
+
+ED 000041/MU68
+(FDP.:MC68000 ?l
+
+E
+
+FLIP 0 1
+
+00004
+
+96-11-01 4 0
+
+MUSL 0 0 %FOO
+
+*INFORM %2400;
+4b9FSEt.ECTlNPUT 4
+ENDINPUT 4 _ h
+ED 00005 1/MU63
+(FDNMU8 "
+
+E
+
+FLIP o ,
+
+00005
+
+0-1-13} 4 0
+
+MUSL 0 0 96F00
+
+e1NFORM 962400:
+4*SELECTINPUT 4
+ENDINPUT 4
+
+ED 000071/MU35
+iFD?cMU8 "
+
+E
+
+FLIP 0 1
+
+00007
+
+4retN 4 0
+
+MUSL o 0 %FOO
+
+*INFORM 962400:
+4rarSELt?CTINPUT 4
+ENDINPUT 4
+
+ED DOCOSVMUGS
+itrD?::MC68000 ?1
+
+E
+
+ED
+
+C/PS VEDiT/D/PtV0'LS/
+
+E
+
+FLIP 0 1
+
+00008
+
+1111-01 4 O
+
+MUSL 0 0 96800
+
+*INFOHM 962400:
+
+ 
+
+
+
+
+MOSS DOCUMENTATION
+DOCO1 l
+
+ 
+
+*53ELECTINPUT 4.
+
+ENDINPUT 4
+
+THANDIR DRAWE DRAWS o 964000
+STOP
+
+::END COMPDRAW5 FOR MC68000
+
+4.8. Private Library Compile Jab for Interactive Draw on VAX,
+
+This compiles all the Interactive Documentation software
+{DISPLAYSCROLLLEVELFLED,XEDITNEDH') into a private library tlDRAWP) in the directory of the
+calling process.
+
+:BEGIN COMPIDRAWP
+DEFINEOUTPUT 0 IDRAWPLOG 96200
+ED 000021/MUGS
+
+(FDP.:MU6 ?)
+
+E
+
+FLIP o 1 .
+00002
+
+mm] 4 0
+
+MUSL 0 iDRAWP 96-405 "
+
+*TLSEG 0 960 96100000 96200000 o;
+*TLSEG 1 960 o 96F(7)0 0:
+
+*TLSEG 2 960 96300000 %Fi710 tt
+*TLSEG 3 so 96300000 96F{7)0 o;
+*TLSEG 4 NO 96330000 %Fi71D 0;
+*TLLOAD 1 5;
+
+*TLLOAD 2 3;
+
+*TLLOAD 3 2;
+
+*TLLOAD 4 B:
+
+*lNFOHM 962400:
+
+qeSELECTINPUT 4
+
+ENDINPUT 4
+
+ED 000041/MU65
+
+{FD?::MUB ?)
+
+E
+
+FLIP o 1
+
+DOC04
+
+Him 4 o
+
+MUSL o 0 96000
+
+*INFOHM 962400:
+
+eeSEUtCTlNPUT 4
+
+ENDINPUT 4
+
+ED 000071/MUES
+
+{F0?::MU6 ?)
+
+E
+
+FLIP 0 1
+
+00007
+
+1retN 4 0
+
+MUSL 0 0 96000
+
+*INFORM 962400:
+
+1eHitit.ECTINP1JT 4
+
+ENDINPUT 4
+
+ED DOCOBUMUES
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+
+E' 9 l MUS6 DOCUMENTATION 1 4-.”
+DOCO1 1 umara LEVEL mas
+
+(FDA:MU6 A
+
+E
+
+FLIP 0 1.
+
+DOCOB
+
+*at-Dl 4 o
+
+MUSL 0 0 96000
+*INFORM 962400;
+'reSELECTlNPuT 4
+ENDINPUT 4
+
+ED EOT021/MUBS
+{FD?::MUS ?}
+
+E
+
+FLIP o 1
+
+EDT02
+
+teDI 4 o
+
+MUSL 0 0 96800
+*INFORM 962400:
+'FeSELECTINPUT 4
+ENDINPUT 4
+
+STOP
+
+::END COMP10RAWP
+
+ 
+
+
+
+
+ 
+
+'t _:jiiiiiiii)is' MUSS DOCUMENTATION 1 442
+_ DOCO1 1
+
+W, _ _ l _ UPDATE'LEVEL PAGE
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+':',-i'ii'i,i'';'ir'i. F L.OWC HARTS
+?ﬁ DOC011
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+
+,
+."'. WE "iPLEleKrATt ON:
+
+595 WtAl-ur%.tADtsuNt3.tltCtuM4t;
+SL5 C0RRENT, IKPLITIJISIII: '" WHSM.WTMI UN";
+
+tut £W.1NPUT{!1R.IIN):SL$ tttlr/fri/tttr."
+$t.S DEFlrlEnKFur-ttitu18Lt"t4lH)fOrtt
+
+5L5 DEF1teAWTPuT_DttuNms"t_N,6"ttf8"tt
+
+s_Ls SELECT. mmum}:
+SL5 5ELEC1‘.0|ITPW{SIRI:
+
+"s tt6CM)Nttt;
+SL5 NEXTCHUISlN:
+
+SLS INHUADDR:
+SLS mmxsmcnsmg:
+
+SL5 mummy:
+
+8LS ummzslsm);
+
+3L5 smcsstsm]:
+
+'" wnmmsm):
+
+SL8 cmmmuatsmnl:
+tts rm”:
+
+su, nnm.muml;
+tu' Imos-ursmaz:
+
+SL8 Lsmnlnusz:
+3L3 st7r.t.tbPnStttt832.8ltt32t;
+SL3 ISIZEn/SIR:
+
+3L5 Tluz.m0.nxr£'n;
+
+ttS IENOIHHH:
+SL8 MLINENOISINSZI:
+
+" "6STrtttADt$L0B3Vttrtr
+us mmmmmsma:
+
+$LS CMATS.SEtWWrNHt.8AD"
+
+TLS ttEiSe.SEt3tWrriS"ut
+.xhWHTEXr.Sf'ELL.kisT"mX4t6mHtrr.LHm8tmtt
+
+ 
+
+ 
+
+   
+   
+     
+   
+   
+   
+   
+   
+   
+   
+   
+   
+ 
+  
+       
+   
+   
+     
+
+  
+
+3
+TYPE 0‘le IS SL016 W.W:
+
+IGLOBM. 2:
+HPDP tL00t$6tRRt3dltu.t6rt8"q80001tu."m
+
+um §LOB£§00003€IKIST=SIHIIWOIRLI§n
+
+t :mm tuMrytt00tttcttt.ltrrrtlttt60arPt.tsTr
+iGLmL 8:
+
+am tut-tttops-rat-tttrt-rum
+mm SLDSIMIMA:ILISTEWIUOOOJILIST:
+”mm "o8Hooo0omartrrAetrLtttTEte900Wb"m
+OGLOIAI. tht
+
+SIM "o,Nt.mt2.PMt
+
+“LOCAL Itt
+
+ 
+
+  
+
+4
+Lane "ttrttagrt8umNNrt8um,8uMrtAtMk08LtAD0Mmtr
+LSPEC mmkt.NMt8ut81.8a0rtLQ9nr
+
+LSPEQ LtsrtrtttExtMttttMiABt8umlt
+
+mac LtWXrtCrt8a0t8uiAot8urR3lg
+
+Lam: C.iimK0t8Atrt8L0tHrr,
+
+93m "AmtA_Attt8umitrt8C0%ittt8htuV8t8"
+
+misc 8tNrmFatrt8ut%a'A0tt'_tt1rt
+
+ 
+
+maul: MANCHESTER UNIVERSITY - CONFIDENTIAL 0000111.”
+Figure I KDOCOIHO tt August I982
+
+ 
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+t
+m FMCESSING SECTION
+
+    
+
+  
+
+4
+PROCEWREQ IN 90001.:
+TEXT
+
+SPELL
+
+LIST INDEI
+
+LIST DICTIONARY
+LIST RULE
+
+ 
+ 
+      
+ 
+     
+
+o
+m
+',it'ii:'
+Ie"' MANCHESTER UNIVERSITY - CONFIDENTIAL mm.”
+
+Flynn r ?.manoa 6 August 1882
+
+ 
+
+ 
+
+
+
+
+“/00! "
+
+"'
+SE0
+
+7
+
+mas WING SEQUENCE
+CDOCOLIJ
+
+8
+TAB
+
+to, 1
+
+9
+COPY SPACES UP TO NEXT TAB
+
+POSITION TO DUFF!” BUFFER
+RESET m UHDEFILIHE Slim
+
+"
+(SP)
+
+"
+RESET m MERLIN! 5"le
+
+COPY ttSP M 10 BUFFER
+I-I-I-Il
+
+IO
+{NLI
+
+"
+“ESE? {.le mun: SUITE!!!
+
+"
+" HIE m7.
+USER tlo6rmLugt
+
+t
+
+731"IN?!LE.OWF#LE.DEVICE.CONTENY8.HIDE]
+
+2
+DECLARATIONS-
+MLLI
+
+3
+FIN!) DEVICE WEE
+iHrrtAMSe PAWEEBS HNNTEHS
+
+TABLIST AND LINE BUFFER
+ser W m: STREAMS
+
+55m DEVICE "8IriALt8ATttgtt
+SEEIENCE
+
+' _
+READ CHARACTER um BRANCH
+
+'_
+"
+
+H430. FOR NEXT man Hi BUFFER?
+
+m LAST M A SPACE?
+
+  
+ 
+
+"
+sum sncza _
+
+MANCHESTER UNIVERSITY - CONFIDENTiAL
+
+Figure 2 KDOCOHOO '6 August 1982
+
+ 
+      
+ 
+  
+  
+
+"
+COPY cum TD BUFFER
+RESET CH WINE SIITCH
+td'-''''--,,-'
+
+21
+H)
+
+22
+
+Th2 LHRE W
+l'IJEVlCE PEHI‘ITIMS]
+
+a
+tll
+
+"
+1\2 LINE m
+
+[DEVICE PEIITTINGI
+
+31
+RESTORE IN SWtSN88
+" “ATE H Elm?
+
+000111.111.”
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+
+ 
+
+f “.800 "
+
+MLLI
+
+mu:
+
+8
+MM tt3orrtrABLHrrtLrtm no
+m1”!
+00
+" " uul':
+
+10
+i smut: ,
+
+H
+lbuul':
+
+"
+IF USER.“ " O
+
+wows:
+
+ 
+
+I
+ma: "xrt1ttri.tittrrra,tm"cE.ctsTaxm, ID“);
+
+wt. 1.1
+
+3
+a no em:
+Illu nmim} " tteMttX Hi
+If , " am , ' 11ml
+CArr_tgmrtcE TYP' m'I:->IWL Fl an
+" llntllrlLEJ-auuom'nu} tat THEN
+HI I < summing} on
+" mnulu] h mu.nn3,~m:
+m
+If nmahtl-tj " " ma
+tuPTrottTi''toIrr Akuet-prAlu'
+H "
+II: _
+0-: kemltrrrtrt3uM.oLPtB-su8egt.r0titt.o 1m
+"t9ttft"$sptts'r4NttEMr-rmiaNtim-yt;sigPTEtt
+
+I) - I) um I; III” " PM
+" 'traHLitMT " 9-}.BIM:
+
+Iml " WU "s am” I) m I) MT! t
+
+3 u “:3 n) FMLW " “AP " CHI):
+
+ulna“: " ulu:nlmloem1 " nun '
+wmlom: " mmm J
+
+" omrm-ammu um;
+
+'r " m:
+
+'0' "Ar.. '[" .309:
+
+''l" " noun: ". n: Tm:
+
+MJWU n MAW:
+
+um.mn i) ”.m;
+IyEr"enetr1trt-t.lttrtu,rM.ttt " Im:
+taLEttlttrttrtlMm1EM"
+
+" ISIZQII <<- I n) l h I" THEN I” " I II
+BEr"troutPtrrf-htt_90thi.ttt,t" " m: h
+ll Iiulml " O m
+
+"rtM.0uTPtNt-em'TB.emttt, 10.19.91 I) mm:
+
+"
+
+" unmask] " tt mil
+tKrtrq.rhJTr0rt-".ititi20thttt.rtt.0t " am:
+" _ _
+mm.m1wrmml;
+
+" mnch'nla'.‘ Tun
+
+HI l < " W m: 1'tmihtt'ti D Fl
+
+ 
+ 
+
+i
+
+ 
+ 
+
+lull " uh
+tr at II AT p: ttMtt."tt.- " tltt " Tm .-, I'M ,
+
+ffql-IL.->m.l.lll: Irm-u.->nm‘:¢;
+1ra1-ur.-ym.u:lruuum.->m.nm:
+Iru-m .-, nmul t a “.m;
+
+ 
+   
+   
+ 
+    
+
+   
+
+ll
+
+   
+  
+
+II n M '
+mm mm: In a II II. " nu
+"AYNttRtotitrttutrrtttt
+amumnn t
+" cult . Lu " Hut.
+
+       
+    
+
+lnu mum . . . Bean
+"-AMttis.
+
+ 
+ 
+
+MANCHESTER UNIVERSITY - CONFIDENTIAL
+
+Figure 2 K900011161 6 August 1982
+
+It
+tom.“ "
+
+"
+mi“! '
+u b MAI:
+
+"
+I HALF.“ "
+
+n
+" mC.DW-l TIE
+
+mpg”: ttts m1 prt
+
+"
+I m9.“ "
+
+"
+IF MAW " 4 m
+mTQqttg " EFF tt " M] :Fl
+
+   
+ 
+
+  
+
+"
+
+mtm.m.aa;
+
+m.umum.ol:
+
+" mm " 0 m
+mcmml n
+
+I! rm " . “run
+mum.” ll
+
+tum. Immua. 1m: I
+
+"Wrr.t3tnPtrrttK-Dto.rt
+
+ 
+       
+   
+   
+      
+
+ 
+
+00001.1ng
+
+ 
+
+
+
+
+ 
+
+( 1 l
+MW.ARATI (INS
+2
+CONSTANTS AND MTAVECS
+2
+VAR IABLES
+
+ 
+
+g
+
+SLIBFRDCS INCLUUE
+FAULT
+
+COPY am TO ”PUT BUFFER
+OUTPUT BUFFER (00001.1-3]
+
+ 
+
+ 
+
+moon: MANCHESTER UNIVERSITY - CONFIDENTIAL otbtltrt.Ltitm
+Figure a Y.DOCOHOO 8 August $982 .
+
+ 
+
+ 
+
+
+
+
+I
+l y..r_liEiis)
+
+2
+urtwmmms 8P"Strisa.mrm4Mtto.
+'RJP"8tt.Nutm_BPi0.uristsr,rrrAao '
+mum manner”:
+met: "Pr. a tub
+mum: uamnml
+m m M m
+mum rsmsumasm
+so so an m
+
+DATAWI: GPIBYALILWIW'I
+' 0 0 ED
+
+mun: IIJTaEmLcmnul:
+
+I8! ill: III "r m 10! I“ III
+mm“! "s%r.q9slNstm
+II. “I II!
+II? In
+
+“I “O
+19' “1
+
+“IMO H!
+
+m
+"I
+“I
+III
+“I
+
+ﬁﬁﬁii
+5555
+
+ll!
+
+gaiaes
+a 55555
+
+‘E°=‘E asig
+: §.£5 _
+Ezﬁs
+
+E
+
+VIII
+‘u‘n
+NI-
+
+iii?!
+a
+
+EEEEEEEEEEEEEEEEEE
+as E
+
+ll
+3
+S
+I
+
+Eﬁﬁiﬁiiiiﬁ
+E
+
+E!
+
+§§§§§£5§££55££
+EEEEE
+
+:0
+ma
+£5
+
+I
+£3
+
+E
+5
+E
+E
+
+E
+a
+
+E
+E
+5§£5E§§5£55£E§§
+
+EEEEEE‘SEEEEEEE
+
+555555
+55253
+
+E
+s
+
+ 
+
+  
+ 
+
+  
+
+mimtml "L‘I‘J'ILIIT '
+MIMI”! m t
+MIMI!!!” ms:
+
+mun 81J??fPtLr06.t'o''th8s'truerrteatr,wrsrtioar,eotrmrrt,at
+out. "tBm"tMut.ur"TtteNCPutdA1ar,Btur,-mtr, Immaulm.
+
+'"m"t."."e."t8sarmoerarootrsstamrarsimtesrr.criArmt.swtats.
+'-r=t1t"'re1rM''rrrttt"tu%t"sPut+t.rott-Aaettsttr.ttttro_t.rzttr,
+1mm ""Lr"Atm1a-a,saerrsooAvrtrstaAvrtpta..
+
+LN!“ ”.mAtuIma-um.“ I
+
+ 
+      
+    
+     
+ 
+     
+
+.
+mm: IMTIRMWH
+'W WH-MICMJI:
+W mtummn
+
+m: nuum I
+mlnltol
+
+ml 0 no mrl': no
+arms.” ,
+
+all
+
+ran: manual I
+M a: ll)" " " IIHMI t
+1 " LPG!
+" - " tt ma
+" um I a! 11m:
+" n - lmsm;
+fl
+" INC.“ " 0 MI
+" " III! " " '0!le J
+IN. a) Bur, tl " IIHFTI] i
+" " .
+M
+
+mLLS
+
+ 
+
+moan: MANCHESTER UNIVERSITY - CONFIDENTIAL 00001.1.HIJ;
+Figure a ?.DOL‘OIHO 8 August 1932
+
+ 
+
+ 
+
+
+
+
+_a...u..
+
+ 
+
+.ouammﬂi
+
+gH
+
+¢n
+
+mu
+
+.5...” at... Pu: D... ‘5 .3: wuqmw
+«Ohm 3.... 5.me or 539: ...mm
+Cumunn 3. 33:9: m_zh Db “DEL
+
+mm a... La) .34. .Emﬁzou
+an
+
+a_v
+m_—
+
+ 
+
+ 
+
+._<_._.zwo_mzou .. >._._wmm_>_zn mmkmmzozﬁa
+
+He.n....ouoaH
+
+nm.nm._m muz.a¢m=
+
+za_»0mm mmmuogm
+a.
+
+rutim mzjzun—S
+u: to ma: hum
+
+an
+
+—a.
+mu
+
+..—
+
+9.1.“— zé.._.0um .5me
+
+22%: 29.5mm 4.
+ﬂigjau www.zaw— 29.56222.
+
+13.3 :9. muudmm Ears“..—
+.mmz: 5215 man in
+amiaAAOL uwuuam .Snzbo
+
+Cu .53sz awn: hum
+n:
+
+.m.
+a
+
+~n.u._._9uoau
+m.g.~.¢.a.o
+mmwoacm
+
+'0
+
+10:3“ uzzzmnz:
+2. h; 9.5! hum
+
+VN
+
+.a.
+nu
+
+     
+
+EL.— Emauxg-
+ammunm E. l .33
+
+5.1”... :0 £0.53”
+a
+
+mu: macaw 02.5.1! mwuubﬂn—
+w
+
+ 
+
+ 
+
+H«.«.—._auoau
+=.».a.: mmwuasm
+«w
+
+:02: “Edam;
+u: h; :55 Pam
+
+NH
+
+.0.
+nu
+
+ma; ﬂue: to
+
+9.3! 5: mod...—
+6
+
+Ana
+
+         
+
+__.~..._ouonu
+..».x.> manuaam
+ow
+
+Eh “In 4.:
+ml. .— cu; m age.
+5.
+
+                
+
+amuse 5.50
+Swami 2. La .58
+
+5:! ua_._¢wg hummu—
+tn h4g0— ..qu hum
+
+ 
+
+nqxgx:
+
+ 
+
+ 
+
+
+
+
+~22 353‘ m 2:88... v 3:50
+
+ 
+
+ 
+
+. . . .l .
+.. 2 . .82 i _ Ema _ 028 Z _ mE> . z: :Ewmzuzé Ex...
+93:
+6.5 10:88. n.~....o8% «.1288. 16:88.
+3 3 3 a. 8
+a
+“5.5:. "ES:~ "8.5:. "ISA...
+.~ .~ nu .n
+In . . .B _ .8 . .3 _
+2 2 .n on
+2
+2
+u.g§.§.g3
+221.23.85.5u
+:3...o:a:o.§:§
+I
+:-.:u=§8.§:§
+5.: o A 550 2
+29:93
+8 :3550
+":0 A. _
+u5:? E39: A. 8 ... .0 8 BY ..1 5 B 8v. <.X .0050... 3:! u 8:523
+.335320320 I .5 A. o 3.: :3 A. o ”33 9 .0
+8 8. :2508 8» B:- 2. “303 an :8: .tuﬁrku
+2 2.35.53 :5: o - Ru 2 . 33%.:- n. :80. 0'3 4“"
+20:» .ngti 2 £33335 .. 83 A. . u Eh! 5.5.5.533 :0 I3
+8 15:3. 0 _ S. u 1.2.58 A. . u 2:33 2 3 .3. A. .2 3.: e X Ell. u. 0 1.2.5! A. .
+2 2 c o .
+.3. .3. .25.. .3. 33..
+2 c n a a
+
+ 
+
+dun ”:5 “mg:
+—
+
+ 
+
+
+
+
+ 
+
+   
+    
+  
+
+ 
+  
+
+IO
+CALI. LI ttRArry
+
+   
+
+nus: mas
+HEAD INS
+
+MSET mamas
+mans
+
+   
+
+     
+
+moan: MANCHESTER UNIVERSITY - CONFIDENTIAL
+Figure 5 KDOCOHOO 6 August 1382
+
+MaM.t.a.tttm
+
+
+
+
+Nag “253‘ m. Q-~Q§X h bsauxk
+
+ 
+
+:.:_.~._.s§ ._<_l_.zmo_n_zoo n >mem>_z: zmhmmzozs‘ 2:2:
+azux
+2
+2..
+2:6...
+8
+E
+E
+“sun:
+2392:9335
+
+2.5 t..3;>..:3.§
+u_:<u¢8.§.3$»2§.53ua
+
+33
+On
+“§3§a_§u§tﬁhﬁ
+BE .7. 2:53.33
+:3: u. v _ u.
+“Bu
+ea
+~52“: £58.. A. a
+"562 A. ..
+9a 5.8.?155‘5 A. .. 2.3.
+:9. ‘ u #3. A. a
+u:3... u 3.3: A. _.
+8 .. 58 A. a
+E I 2 “a:- A. q
+.58 Au .. aw; u .3: A. _.
+.5 A. _. zuE _. n _ 2 mad £53 2 2.331%: n 2.93!
+x227... .35 u. . . n. ma: £23 2 .5933; u 593.
+”So 2 A... 5:» .. u _ u. 3.: 7. «2.323.!
+8 8 ._z .< :52. 3:: 8 8 . .._. co 2:11.25... 3:! 2. A. :::
+8 8:? :3. n _ t 5.: 2 v _ u.
+So A- J: . nﬁmaugzomawcé .- 3.6:. u. 8 8 . .u. S 25.2.35... 3:! 2 A. :3.
+"2954...; 2 3 v 39mg: :2 8 d. .\ :55? 3:] 8 d. .\ :55: 3:-
+2 n v a
+33m _ 3m . ta _ 26 .
+a a a .
+
+ 
+
+
+
+
+ 
+
+I a tt "
+(II) (T) (H) (K)
+
+  
+
+    
+    
+    
+   
+ 
+  
+   
+    
+
+  
+   
+ 
+ 
+
+" "
+
+SET HEADIKE BIT
+m USERFORI
+
+     
+ 
+
+   
+
+INC THE
+HIGHLIGHT BIT
+
+   
+  
+ 
+
+SET TABULAT I Ott
+
+WE}! AND
+STOP POSITIONS
+
+CALCULATE INDENTAT lad
+
+REQUIRED FOR CENTRHOG THE
+REST OF THE LINE
+
+    
+
+  
+  
+
+G
+
+COPY SPS TO BUFFER TO
+GIVE "GENTATION
+
+SET USER FORMAT BIT
+
+ 
+
+"
+
+0
+END
+
+“/06"! MANCHESTER UNIVERSITY - CONFIDENTIAL ttotX".t,2.2it,0)
+Figaro 8 Y. 00001100 tf August 1982
+
+ 
+
+
+
+
+Nmm~ unaaa—x m Q2.3UQQ.L h ?.?EK
+
+ 
+
+..:..;___~_S...§ 2:23:28 . 55322: :mpmmzuzé =3:
+
+.2
+
+ 
+
+   
+
+u guéww: .2 —
+8 £252.39
+3 Fame. Ham
+
+    
+     
+
+Do
+
+32:533.?- _ 8 15:96:35 v _. 3:3
+“:3...
+3
+
+ 
+  
+
+ 
+
+no
+
+ 
+
+“2535.» e. _ u- a 5+ .
+
+3 T. v .. 3:!
+ﬂ 5.. 2::
+
+S .5 4 3:25.. 3:5
+.55; n... :52.
+
+“a.?To
+
+ 
+
+.. can. A. u x £53.33»
+:_+§_uu§§_
+
+         
+
+Stagna—
+on 43 la :39: wdi
+BREAD."-
+
+      
+
+   
+      
+
+ungaxui A+ u
+3
+
+“gwémw: A.- N
+«w
+
+   
+
+3a _ 23 . PB _
+z : a .
+
+ 
+ 
+
+ 
+
+ 
+
+a b. r
+
+M
+ig
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+S a 22
+{D} IAt w]
+2 ' " 23
+panes HER PAGE IF SET USER FORIIAT 311 SET usan summ- arr me M FOR tt
+INSUFFICREM‘ sues LEAVE sacs ou-rm'r aussea 114511 SET usen FORRAT 11mm
+START nlsrucen Terr 1.1115 cman-
+"
+3 T TI
+te) IN te) _
+, v
+4 a "
+SET usaa FORMAT 311- $21 usan saw? tbtT MT USER Form:- arr
+1mm susren FORCE names ourwr BUFFER
+EM D§SPLMED TEXT La“! [“5me SPACE
+: ' 21 , 1
+"
+mo
+“man: MANCHESTER UN I VERSI H - CONF I DENTIAL munzanm
+
+Figure ' KDOCOHOO if August $982
+
+ 
+
+
+
+
+I111 . u t <vuu<§<c > h !\..l~H
+
+ 
+
+_.._.n.~..._ouoo
+
+..<_.rzmo_n_zoo 1 >._._wmm>_za :mhmmzoz<= :32:
+
+em:
+2
+E . . u
+I I
+27.32.50
+u .u _ 35.3932.
+muam
+
+unam><u An .ooo_uuaxasu_nannmos><u A. o
+.m
+
+“pxuaz. A. a:_>«a
+
+u .3§<u.~8._><u. 33...Bu
+
+gush o ua «mo;><u u.
+
+“ .g4ao. n‘anhao
+
+8 ca 4n.l\:zoz_ uii
+“mZJLwE A- o
+
+u.u24mm_o.uu=uhao
+zux» pzaouaym~_mavmzdmm_n A. ._ .2. u.
+
+:3: o I «mom><m 93 O I madam:— u.
+"guzmm: AI —..
+
+u ._-.gu=a»=o
+.3
+u..-.uu=nh=o
+zuzh o -\ axgga_n u.
+u axou.=mu: A. —
+
+u aco;.=um= A. _
+u. u .
+gum . egma . «Na .
+_. n a
+h. n
+_u
+u..1.un=n»=o
+u.u.uu<suxu<¢z_
+mmdu
+.m
+co co 4...\..=uz_ u4.:: .
+no
+on .N. .\ .. zupxuz go
+»< .\ ..:uz_ ud_zn
+u _d&><m A. _.moa._u _moa><m A. .. moan;
+wmdu
+u93¢... A. Law» n.3(un_uu=a»=o
+ua¢03¢wm= A. _ "umog><m A. _-
+.m zmz» u~_u¢-»z=ou4 A g¢aa-mzdsu.o m. “ .._um=a~=o .;
+u..-.um=ahao u._:uz_ungmm_o A. .._z_ u c .u ._-.uu=nh:o u._1.um:ah=o
+"axo.xmm= A. F zuxp o . umo¢>(¢ az< o . mz;¢m.n m. aux» pzaood 1 u~_ug A . A. .__z. u. “axosnua: A. _
+zwzh hzaou41m~_uaALaupA-.._z_ u. "acousmma A. _ “aeouzuu: A. _ sass panoOJ 1 u~_us A .._x. n.
+ma o. o a
+.5m. #5. 98. n3 _
+«a a a
+
+O
+
+ 
+
+ 
+
+
+
+
+ 
+
+ 
+
+14; 061'le
+
+  
+
+ 
+
+ 
+
+a
+t CHAPTER READING (HI I
+
+6
+WT?!” "WAGE
+
+T
+
+READ IN HO AND STHHIG
+SET CHAPTER HO AND PAGE i
+
+8
+1tPOATE CONTENTS FILE
+
+8
+t3UTPOr CHAPTER “WING
+
+IO
+ADJUST PAGE LAroor VARMBLES
+---...=.,2
+
+1
+SECTION READINGS
+51.52 AND BB
+
+"
+
+2
+IF NEXT Cit IS- 1.2. OR 3
+
+WTP‘UT REHMNDEH OF LINE
+T0 CONTENTS FILE
+
+  
+
+_ 3
+ser USER Em? HIT
+SET SECTION FLAG
+otmrur BUFFER FOLLUIED BY
+Mur BLANK LINES
+
+tr0rPur aw LINES " IT
+CAUSES A NMME
+
+SET USER FONT tHT
+
+“gm
+
+MANCHESTER UNIVERSITY - CONFIDENTIAL
+Figure 8 r.ooconaa 8 August 1932
+
+DOGJIJJJHJI
+
+ 
+
+
+
+
+I 311: SS;
+a 2
+thmeurFt-trt IF umcmm cu . 't
+" oft 03-1 on cuu'a THEN
+INCH“;
+T IF cams'm " 0 THEN
+INII}I)WEH; SELECrANTPUTfermrsTm;
+WILE Im{} C S21 tro tatt IF tm < " THEN
+INMC&SPACE[1}: Qtrrtntt"t;mrrCHi'tuy..
+-oot: Fl
+mILE INCH: ]-)WSTR[1+>I] " _ Do 00 0 s) cm;
+1-) PW; IFCH>'IT11EH
+" sucssm:
+4 " cm:
+a "
+
+IF comm " 11 THEtt 1111111511 ., amaznrosn " 31mm:
+"LECNUrr'tJTtctWrtrTttt,. 111111.; 1111:1111-ch " _ Do
+mlmts-uL-n 19:11:51:
+our: ftMAPr0.0t'.mmst',yrsrueest2tr 0111;01ch oo
+F1111 d < t no wrmtcmpsmpn on 0111131111;
+
+0111-1211111.- " CRAFt8R , a men
+wmmm: our, 1mmm :mcu1-.1 "
+Miwn'JuL-n 'urttr'Courliurrcin"t:tsirrtmtrtut;
+seEtrr00rPu7tour.soteatu: SEroru8tsAvPtts3,sAvrTat;
+Fl suscrmmmmmmn
+Fl
+' ''
+9 =
+KNLIHeSNtt
+smeas t LS 125- I 41 ; '
+thrrlitMAPrER.2tr 1 " 115511501111 " 5311:
+my.“ IF LCo0frrrsGAPimAP+trtrsIze man
+srmss 121 , tWTBuFFtSGANBaAPttt '
+son a , I no ELSE mammary Ft
+mwuammun; t " usanoau:
+on
+ummaum;
+' q
+“£90
+" "L---.,".',".
+15 " hm:
+nausearommm:
+11:09:12 MANCHESTER UNIVERSITY - CONF l DENTIAL DoCttt.t.2ott.gy
+
+Figure 3 KDOCOHIO tt August 1982
+
+ 
+
+
+
+
+t
+OUTPUT SUFFERINi
+
+ 
+
+2
+REBOUE TRAI L I HG SPACES
+
+a Y
+" THE EUFFEH EMPTY?
+
+d
+COUNT VSP SPACES
+
+'
+
+y
+' ls TEE BUFFER SPACE FREE
+03 USER FWT‘I'ED
+
+  
+ 
+ 
+  
+
+tt H
+is DEVICE VARIABLE SPACE TYPE?
+
+  
+ 
+    
+   
+ 
+
+  
+    
+ 
+
+,
+comm SPACE SIZE m mm" JUSTIFY
+BY USlNG spaces DP APPROPRIATE SIZE
+SPACES OF APPROPRiATE 5le
+[mas.1.3.2)
+
+   
+   
+ 
+
+"
+MEET vsp
+
+" SPAC "
+
+    
+    
+
+EIGHT JUSTIFY BY msmms
+EXTRA spaces h
+[nocu1.1.3.11
+
+ 
+   
+ 
+
+.
+
+CREATE WEI" m
+PRINT THE BUFFER
+
+[m1.1.3.41
+
+"
+OUTFW KEKLINE
+INC LIKE COUNT
+
+"
+MPUT N BLANK LINES
+
+MD INC LINE COUNT
+{m1.1.a.a)
+
+RESET BUFFPTII
+RESET "areltr IF USER FONT BIT BET
+
+I RESET USER rum? SIT " NOW IN
+USER FOW‘ITED BIAGRAtt
+
+REEF? km
+_ SPACE FILL BUFFER TO INDENI' PO8trum
+
+"
+EXIT
+
+ 
+
+ 
+
+ammn MANCHESTER UNIVERSITY - CONFIDENTIAL mannmum
+Figure 9 KDOCOHOO tt August 1982
+
+ 
+
+
+
+
+1
+FROG OUTBUFFUH:
+SIN l,J,thFrR,tWht,CtMrrt
+PSFEC SPACE, FILLI INTEGER]:
+FSPEC VAR.SPACE.FFLLI INTEGER]:
+
+m!.1.3.1
+#130601.le
+
+2
+
+WHILE RUFFFTH " CI AND 1nlFFtBUFFPTR1 - USP 00
+l -> BUFFPTH;
+
+1 " LPOS:
+00
+
+3
+IF ausrm < D
+
+ 
+     
+
+4
+
+  
+
+  
+
+D " COUNT:
+m t 4 BUFFPTR +190
+IF aussm . lem men
+
+1 " COUNT
+ELSE
+IF EUFFfl]-'. AND BUFFII+1]-V3P
+mo BUFF[H2]-VSP THEN
+'PiuFrt1ttp-rsurFt H2}:
+Fl Fl
+OD
+
+    
+   
+   
+     
+     
+     
+     
+ 
+
+'
+IF COUNT I D MI USEHJORM " CI
+
+ 
+   
+    
+   
+   
+
+  
+ 
+
+5
+IF srscmeva‘t . o
+
+  
+
+n
+Fun It < aUFFm ' 1 no
+IF ausan . v5? THEN
+
+" "' ausnn
+n m
+
+ 
+   
+   
+
+   
+  
+
+'
+VAR.8PA0E.FrcLttuxtttry:
+
+  
+ 
+  
+
+  
+
+I
+st'Aee.rlLLiCoorry;
+
+ 
+  
+
+a
+m man: no ounmsn
+
+oo
+8MC0t.t,S.4
+
+  
+      
+ 
+ 
+     
+ 
+
+"
+"MINESUJ:
+
+1 " LEW:
+
+ 
+   
+ 
+
+"
+WLLSJ
+
+"
+-t " wrrm:
+IF mammal " Q THEN
+OnINDENT Ft
+" r-o U.F.Dim " ft THEN
+
+tt a, USER. sou:
+"
+
+0 " Lm:
+
+FOR man no
+comma?) on
+
+ 
+
+‘
+H
+
+”-2
+
+14mm: MANCHESTER UNIVERSITY - CONFIDENTIAL munus.”
+Figures 9 ?.DOCOIHO 6 August I982
+
+ 
+
+ 
+
+
+
+
+t
+RIGHT JUSTIFY BY INSERTING SPACES
+
+   
+ 
+
+  
+
+2
+THE MMBER 0F VSP SPACES IS N
+THE MEI! or SPACES ttEttlJiREt9ixt
+
+. LINE SIZE - CHARS IN BUFF
+FORM A OUOTIENT(O) AND
+
+A REMAltt0ERtAt OF X/N
+
+ 
+   
+    
+    
+ 
+   
+
+  
+
+3
+LET ttt " THE men 0F SPACES
+
+T0 BECNE SPt SPACES EACH
+LET " - THE MEN OF SPACES
+TO BECNE SP2 SPACES EACH
+
+I1 I N - REM: I2 " HEI
+SPI-(k-I SP2-0+2
+
+ 
+   
+      
+ 
+
+      
+   
+ 
+
+  
+
+4
+TEST RAND“ BIT
+
+  
+  
+ 
+
+ 
+
+ 
+
+  
+
+INTERCNANGE
+SPt IITH SP2
+AND ttt WITH "
+
+    
+ 
+  
+ 
+
+  
+
+l
+
+i
+i
+l
+i
+
+I CHANGE THE Hm I! SPACES " SIZE SPt
+
+ME THE NEXT " SPACES TO SIZE SP2
+
+7
+
+EXIT
+
+    
+ 
+
+ 
+
+ 
+
+moon: MANCHESTER UNIVERSITY - CONFIDENTIAL oooon.1.:.m.e)
+Figaro IO Y.DOCOIIOO tt August 1982
+
+. "l
+
+ 
+
+
+
+
+1
+Pnac SPA¢5.FILL{N):
+rn1zsaa 'A3urrrrttwrtrt"h2.sP1.sr'rSP.srzE.rrtt,t.irrt-rmso.srs.x,.
+
+    
+
+2
+
+LSIZE - LPtm " x;
+X!!! I) tt;
+um -: x " H:
+
+   
+     
+ 
+   
+
+  
+
+a
+a+1->sFT+!->SP2:
+tt-ertt2-:Nacrtit;
+
+    
+ 
+  
+ 
+
+ 
+
+ 
+
+4
+"'LC0uNrg1.00Rttaaatt
+
+  
+ 
+ 
+ 
+  
+
+ 
+ 
+
+8
+ap1 " sp.51:£;
+s»: " SP1:
+
+ss.s:za " SP2:
+
+In " N.SPS:
+" " In:
+
+MLS" " u:
+
+       
+ 
+   
+   
+   
+  
+ 
+
+ 
+ 
+
+a
+
+te>80Frtmt+xaoFrR-taoreqtttt;
+
+sun 1 " SUEFPTR , o no _
+
+sir B0rrtttuFFrmn " vs! 8TH
+aurrtaussrwnl " auFF:1 " PTR]
+
+SEL
+
+sFo 391 no " " BUFF[! " PTa] oo
+
+" 1 " II a 0 St“ SF: " SF! "t
+
+"I 00
+
+am a) wrrm:
+
+ 
+     
+     
+   
+     
+ 
+     
+
+_ ,
+END
+
+ 
+
+sum“: MANCHESTER UNIVERSITY - CONFIDENTIAL mmnnmunn
+Figure 10 Y.DOCOII!I 6 August 1982
+
+ 
+
+ 
+
+
+
+
+ 
+
+1
+JUSTIFY BY CHANGING SPACE SIZE
+
+ 
+  
+       
+   
+   
+     
+ 
+  
+   
+ 
+  
+   
+  
+
+ 
+ 
+
+_ 2
+THE ”BER 0F VSP SPACES IS tt
+
+THE NUIIBER SPACES REQUIRED X
+
+FOR! A QUOTIEN'NOI
+AND A REMINDEIHR)
+
+VSP S|ZE(2) . " + 0
+N-tttCOUNT) VSPS SHOULD BE SIZE 2
+
+AND R VSPS SHOULD BE SIZE 2+1
+
+  
+
+3
+SET m T0 SCAN BUFFER
+
+  
+
+4
+IS BUFFIPTR] .VSP?
+
+8UPF[PTN}-VSP OF SIZE I
+Coog'NCthlt6r-t
+
+    
+    
+ 
+
+ 
+
+ 
+
+IS THE "R " END OF BUFFER?
+
+"
+EXIT
+
+ 
+
+ 
+
+MANCHESTER UNIVERSITY - CONFIDENTIAL oocnt.t.3.2tt.'t
+Figure " Y.DOCOIIOO 6 August 1982
+
+“[00].!
+
+I
+i
+
+ 
+
+
+
+
+1
+F503 YNhSt'AeE.Flu.tttt:
+SIN tLR.tttrittHhCte,x.CtturrT l
+
+2
+LBIZE - L?” i 1 l) At
+
+1o-xm->a:
+100x011;
+nuo-)a:
+n+5ca->vsrcu;
+Ft-R-pCO);
+
+IF aurrtmj " VSF
+
+a
+VSPCH " BUFFIFTR];
+I " COUNT:
+
+ 
+
+runs“: MANCHESTER UNiviERSlTY - CONFIDENTIAL awounaan.”
+Maura It KDOCOHU 6 August 1882
+
+ 
+
+ 
+
+
+
+
+,
+OU'I'PUT N ELANK LINES
+
+2
+ts FOHCE NEH PAGE SET
+
+ 
+
+      
+
+IIOVE T0 FOOT OF PAGE 12
+
+OUTPUT PAGE NUMBER ADD lt " LINECDUNT
+OUTPUT ONYE OUTPUT N HEWLINES
+"IO PAGE WEE
+
+'
+THRW NEW PAGE
+
+7
+
+RESET LINECDUNT 4219 {SEE
+FORMAT mm WT
+
+OUTPUT PAGE HEADING
+
+10
+
+mm tt [391“!!!
+SPAtlefTSXT
+
+ 
+
+ 
+
+141mm MANCHESTER UNIVERSITY - C0NFi0ENTIAL m1.:.a.au.n
+Figure 12 Y.D0C0tt00 6 Angus: 1932
+
+ 
+
+
+
+
+1
+:wun'u'r N BLANK LINES
+BEGIN
+SIN I:
+
+    
+
+  
+
+'tmFL1rlESit'Sl0a-LCutWreTt;
+SPACrStLSUE f ll - i] '
+IF PCmmr ' 0 THEN
+1F CHAPTER , 0 THEN
+$AfrCHf'-VANrTlteHArrertM: OUTU-H‘J;
+ELSE 'PAC"tatttNJrCHt'-tr
+Fl
+WTHPGOUHTJI:
+MITCHF-IH " FCDUNT:
+ELSE SPEESIB} Ft
+IF DATE ' 0 THEN
+
+1:5FACESILSIZEI2-11l:
+
+”MATE“
+"
+HEILINESH};
+
+ 
+ 
+     
+   
+  
+ 
+
+ 
+    
+ 
+  
+
+   
+   
+  
+
+"
+Fl " Lcoum '
+ummestm;
+
+      
+   
+     
+    
+ 
+ 
+
+ 
+
+  
+
+PAGE.tup I) LCDUNT:
+tr "h U.F.DIA§:
+
+ 
+ 
+     
+ 
+
+a
+SPACEB 1Ls1zs‘1’mmuz +3] ;
+FM 1 < PAGEIWZ 00
+
+mm IPMEISG ttlt
+
+ 
+   
+    
+
+on
+NtNLiteStPAdW.t5Art ,
+
+  
+    
+ 
+     
+ 
+
+tt
+IF DISFLNS " 0
+
+ 
+ 
+ 
+ 
+
+"
+IF team " PAGLW THEN
+
+nmmeumr ;BGAF " LCWNT:
+Ft
+
+" manna , 0 THEN
+1:15er " I l
+a u 1:13er l
+WFF tit '
+£1.55
+111112117 u) SAVING:
+1.3m " a) SAW: H.908” " SAVPLI:
+SELLER” {uvmnamu l
+o " DISPUIS l
+
+ 
+   
+         
+   
+   
+   
+   
+   
+   
+    
+
+  
+
+9’3 "
+
+H:
+
+M bum MANCHESTER UNIVERSITY -iONFIDENTiAL m:.1.a.au.a1
+Figure ta ?.DOCOHH tt August 1382
+
+   
+
+ 
+
+
+
+
+ 
+
+RIDE!!!
+
+t
+PRINT BUFFER
+
+   
+ 
+
+2
+l3 HEADHOG BIT SET
+
+tFt 1J8HtF0ftt"
+
+  
+
+ 
+    
+   
+  
+  
+
+   
+  
+
+3
+DDTFUT BUFFER mamas
+
+TO EEVICE TYPE mm W
+IF H15HLIGBT BIT I5 SET
+
+4
+EM
+
+MANCHESTER UNIVERSITY - CONFIDENTIAL
+Figure " ?.mano: tr August 1982
+
+  
+
+GEHEMTE READING MP!”
+
+00601. 1.3.4.11.”
+
+ 
+
+ 
+
+
+
+
+t
+HPRINT BUFFEtt CONTENTS
+
+ 
+     
+ 
+
+2
+IF USERFDHH ' t.
+
+ 
+ 
+ 
+ 
+
+  
+
+3
+" HIGHLIGHT II D THEN
+CAFTiO‘MI'I '1:
+
+1 " HIGHLIGHT:
+
+ELSE
+CAPTIDHIII' 'I:
+
+ 
+ 
+      
+       
+ 
+
+"
+AL?EHNATWE am #11011
+2:091.
+325111
+riot 1 K BUFFPTR ' 1 "
+IF BUFF trt a sun - me man
+ourmurm:
+0111:1115151:
+m1 BUFFt 1 pauan l
+wruuno}:
+ommum:
+WIMP):
+OUTCHHBII;
+EME " EUFF ttt " nu? THEN
+tNmeHtstByithmaustett0trrmHstuy;
+MfrOrfStBlstRfr0sts8At;
+'t"mfs"y;0uretertstrtcttipt;
+ELSE IF sun: UI - 11m men
+ourctus'ttsraotrrxmtsirourc-r,
+
+ 
+ 
+      
+   
+   
+   
+   
+   
+   
+   
+   
+    
+   
+ 
+  
+  
+   
+     
+   
+  
+   
+   
+   
+   
+ 
+
+ 
+   
+
+   
+   
+  
+
+   
+  
+  
+  
+  
+   
+   
+ 
+  
+ 
+  
+ 
+ 
+   
+  
+
+Am d < ' BO
+FOR t <5us1=m+1no
+IF BUFFII} i . . THEN OUTCHI' '1;
+
+  
+  
+   
+ 
+    
+ 
+  
+  
+ 
+  
+    
+ 
+ 
+  
+ 
+ 
+ 
+
+ou‘rcrusua; ELSE
+
+'ouTci'NuHeourtrrHstEteotrTTHttrt.. BUFFEI] - '0- r? " PTR;
+ELSE 1F aurrp] >-a- THEN
+
+owm 1111131111 51151111] - -w- o T " m:
+n " " Fl _
+
+on
+
+END
+
+”LFT
+
+FOR I < IWFFFTR ' 1 90
+DUTCH {HIFF [I1]
+
+titWQRtqPrtt ' u ' tl " SW:
+Fan tt < ttttrotting? Do
+lFtMthStuhwtrTttett
+OUTCHI' 'l;
+ELSE tRfTCHte0Ctuttt;
+Ft
+
+St'hf <<- 1 I) tMft
+
+ 
+
+00
+
+um
+
+BEGIN
+
+$114 TENTHLLPOS
+
+   
+ 
+
+Fl
+
+   
+
+    
+ 
+ 
+
+SPS 5315?. [SM] l OD
+
+Moe SETS: "m l MERLINESIU:
+itl/SLOI E56 I IS! l CID
+
+DUTCH {ESQ} ' " LGOUHT:
+
+  
+
+amen 1-1.1 I
+M1331“! I
+em
+FDR1<SUFFPTR+1DO
+IF DUFF ttl " vs» 'MM'
+Burr tll - v31- " 751111111:
+85752 {'0'} I
+lWHLE ?ENT‘HS "" DO
+OUTGI t" " t
+8-) T911113
+DD
+SETS: {rams - a ' 'ot l
+tRfett " 't t
+5m: f't"t
+ELSE
+iWTtitt (NF? tHI l
+
+ 
+ 
+    
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+     
+      
+
+4
+tttttO
+
+warms: MANCHESTER UNIVERSITY - CONFl0iiNTiAL Dotu".1.a.4tt.6t
+Figure " K190601111 6Augttst 1.982
+
+ﬁm
+
+ 
+
+ 
+
+
+
+
+   
+ 
+   
+ 
+     
+ 
+     
+ 
+   
+ 
+   
+ 
+     
+ 
+  
+   
+ 
+     
+ 
+     
+ 
+  
+   
+ 
+
+HEAD DICTIONARY FILE
+
+SELECT CURRENI’ FILE AS MP!"
+
+4
+SELECT TEXT INPUT
+
+I
+u s
+SCAN FOR ALPNABETIC '
+y WAS PREVIOUS CH A WHO SEPAMTOIW
+READ C318 UNTIL MW-ALPHASEriC
+I
+_ r 18 CURRENT Ctt A SEPARATON?
+' ADO me To DICTIONARY
+10
+PRINT "Em!
+"
+' Mott FOR DRE MES?
+"
+MIN - M our OF SPACE Fm NE!
+"
+I
+mom: MANCHESTER UN I VERS l TY - CONF l DENTIAL mun...
+- I Figure " r.DocanoI 5 August 1982
+
+  
+
+  
+
+  
+
+ 
+
+  
+
+  
+
+  
+
+  
+
+ 
+
+
+
+
+ 
+
+1
+mac Br'WkLtttlttrExtt;
+SIN 1e1.sP1e'ty'ramottatmermrrsxrtrcmoatasasrat.usm;
+Sle/WI‘LDC] ”FILE. '
+um 'ttt 81.52.53:
+:;I-or F1te.TfHyPeIi-1.s2srotrrsArtt-rn;
+”J’DF ts"rE-stti'tsrm-r.szoooitkimtGsi,s,"iii.
+:m "EAm"Gt'"Tt-r,saoo-rtmeuysa.4t.tra,
+:IJO BELELSE.8EmIS.l;
+x” C'tEArt.srtaeEHrtorstooatpr
+.mm Jt"E"csEmroTi4meaoase.sgtsnorrtoy,.
+EON 'te1'"e.sE-tsatritsvsAas.sEtsatomssr..
+mam P1"iy_eEH1retmr;atEareass-rto.ssatot;
+1ctttN800t) PeArE"EretuiooirtttuarE.setateririisi.'Giati;
+:Icuaom 'efc-1Pr""rr".-r.orsArtsor-corr-tst,-Cirt;
+"ne "l em.tsTzosoott,ttotTsz2oo;
+
+ 
+ 
+   
+ 
+ 
+
+ 
+
+um ILI mlsrz-aoom.n1mm
+Irttcriq0at ILI ChblSTzer3tt.qtLtsTstttttttt..
+-l " usmd " MEN:
+
+'rs mun“:
+
+8Ltrcat.2.t
+
+2
+m.1mn.m.m;
+stun. "evrtDErmE. "otm-tAurttt.tt-rortt,.
+
+Nut“:
+INLEJMU I " . nun {Imu-amm all m " an 311 $26.]
+BOOB
+w tENtMrINtettqqtEtt
+_ ',AAT,eitl;
+
+“NJ M )I“ " m m )I‘. nc': an
+m " MIWNMI:
+1111:1111 " m:
+
+a n) mLIrI'[1+>I]:
+Wt}:
+-m.m:
+
+n
+
+. a
+tltmt'ttmrrmrrtt " W.-
+'""turrrurrtKrosotreurt-t.evnriez.oi.o-r, r
+
+4
+
+?Ptreerftttt"ttrrttmmortExr.o.orrorrxr"n;
+"r " rumm:
+
+'--c-==cca==h
+
+I111: mun I " - tt um {nan " mk'nun m r11 a m rzcn no
+51' " m.tw:
+
+m
+
+IF 1mm I " " o
+
+  
+  
+     
+ 
+ 
+   
+ 
+
+'m-MM1.trmArr.6rsrsrtp.
+NIL! 'rKNItmatMt )I'A " Ell. m >r- -<'l DI:
+S"- " cteMTtHtl1.r
+
+ 
+
+Ian
+D " mm: tut}:
+
+ 
+  
+   
+
+'
+II mmm {.11. " . .
+
+ttt
+'ttrut 6teLWrtHS 1.11m " 5 trtt m1m1 no
+Hmmnm:
+
+   
+
+"
+IFLA8NtretlttLt.Narttttaaqqret-
+
+It
+lum1w1:
+Mlmtvmnim max 1.1" MP1:
+mlmu]:
+"
+"Wemrrrurtetmottgtr
+"otrreurtwttrtn;
+
+"tt.00mtrttwT.mt
+"trmrttrttrtcr"t.ort
+'mr"eurrNottm.ttt..
+um ""A"""t'e''rMtyioLea"astt-t;
+”HIP unm.mm1u1;
+
+ 
+
+ 
+
+-'"-e.d=-.ettr-tt-------r----.-
+
+"fthV" MANCHESTER UNIVERSITY - CONFIDENTIAL Docenau,“
+_ Figura " ?.DOCOHN (tAugust 1982
+
+ 
+
+
+
+
+ 
+
+ 
+
+MIMIC:
+
+    
+    
+    
+ 
+  
+ 
+
+DECLARATIONS
+
+  
+
+3
+COMPUTE HASH
+SET NLIST m
+
+  
+
+4
+CWPARED ALL NAMES
+IN MUST?
+
+ 
+   
+ 
+ 
+   
+  
+
+11
+MAKE NE' "LIST
+
+      
+ 
+
+3
+ARE HASNS THE SAME?
+
+ 
+
+  
+   
+ 
+
+   
+   
+
+0
+SET POINTERS FOR
+
+NAME CMPARISN
+
+"
+RETURN MEI NAME
+INDEX AS INTIO
+
+  
+
+ 
+
+ 
+
+MANCHESTER UNIVERSITY - CONFIDENTIAL
+Figure " Y.DOCOHOI if August 1982
+
+  
+    
+   
+ 
+
+ENTRYAT LAST" POSITION
+
+oocot.a.u1.n
+
+ 
+
+
+
+
+  
+
+tm '.d.lt.L.KAtmt,tt..
+
+ 
+ 
+ 
+ 
+
+  
+
+LASTCMorletortt..
+o " MSW:
+
+SIN OCLIST[1+>|] -> J " 0 00
+
+IF J " " THEN
+
+J-VA " J " CHUSTU] Fl
+JISIF+NASHIIIFF <<-1->HASHIW
+l-LASTCN-‘l->N9 (mm <<-7) 0W1:
+1+ LAS" " I:
+
+ 
+    
+      
+     
+ 
+  
+ 
+
+  
+
+4
+'Ft-tteo
+
+ 
+   
+ 
+  
+  
+
+ 
+ 
+  
+  
+ 
+
+"
+
+ 
+
+t " MSW:
+LASTCtt ' I u) um or ILISTIUSTI]:
+HAS)“ " HASH 0F ILISTtLAsT']:
+
+N " us‘rcu:
+
+   
+ 
+ 
+
+'
+IF HASH OF 'LlSTfI] " HAS."
+
+ 
+ 
+ 
+ 
+     
+ 
+
+6
+Km OF 'LIST[I] " J;
+O I) L:
+
+ 
+    
+
+14/00/12 MANCHESTER UNIVERSITY - CONFIDENTIAL oocoanu.”
+Figaro " Y.DOCOHH GAugust I902
+
+ 
+
+
+
+
+ 
+
+t
+LIST INDEX! INDEX,OUTF|LE)
+
+   
+    
+    
+ 
+   
+ 
+   
+   
+
+  
+
+6
+SELECT OUTPUT OUTFILE
+
+2
+
+READ mes moo INDEX
+[000015.11
+
+  
+
+FAIL
+
+ 
+
+     
+   
+
+   
+ 
+
+3
+SORT WES
+
+[000015.21
+
+3
+SELECT ORIGINAL OUTPUT
+
+MONITOR - INDEX T00 BIG
+
+   
+
+moon: MANCHESTER UNIVERSITY - CONFIDENTIAL oooomu.”
+Figure " Y.DOC01101 8 August I982
+
+ 
+
+
+
+
+PROC LtsT."oExt"ttrEx.ourrtcEy;
+
+3m I,o.sioLttotrr.rtEmur..
+
+:mw SIN 51.52.53:
+
+::PDP cttEA"-sest'EKri-trs2ooot;tw'imrurst,a,tn.
+::POP f'lfA".semetrrt-t.s2ooorsartrnmos2.s.u..
+::PDP '"ATe."GteHrt-t.s2oootruAritneurssa,tr.ti..
+ml“ RELEAse.sEtiirttmt..
+
+mus C'tEArE.sEtitertstr,stooom.. .
+HECBIOOO RELEASESEGIENTHE) :RELEASE. SEGIIENNAM:
+
+:zICBBOOO RELEASE. SEGMENT”!!! :RELEASE.SEGIENT(BI ):
+:zICGm CNEATE.SEGIENTHS,MOOO) rcteATE.SEGMErrrt" 54000);
+
+HKIIOOO CtteATE.sEtWerrrtso,saooot 'CREATE. SEGMENNSI .SJWO):
+HEBBOOO '"''t".-'.oru"Pt".-".or;teAPiso,-t,otoiAimrt.-Cin..
+
+G
+WRRENT.OUTPW( )->0LD.OUT:
+SELECTOUTPU’NDEFINEOUTPUT(-1,MFILE.O,B‘.10.0)->NEWT):
+
+2
+IF "Ao.uAuEst"toex.octtctsr.etcisrt < 0
+
+ 
+      
+ 
+ 
+
+tt
+emmmm,-I):
+"LetrTtWrr'urtouy0tm;
+WTIOONS'SLINDEX TOO BIG'):
+
+ 
+ 
+
+_ 3
+SoRr.t"'est.t:tosr.trst.rttrt..
+
+ 
+      
+  
+
+4
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+-t " I:
+INILE NLISTIH>l)->J " 0 Do
+NEVLINESU):
+INILE Cttki8rtHrJ-tt " SY‘I " 0 00
+OUTCHISYI);
+00
+MILE CHLIST[1+>J-t] " sm " 120 DO
+ourcmsw):
+00
+oo
+
+  
+  
+ 
+ 
+
+,
+
+"LStrrttuTPUr'.ouythrrt..
+EtoourNrttett0ttot..
+
+I
+::m "ktAttE.SMteeHrtat "
+::m RELEASEJEGIEN‘NSZ) "teLeA".Seamtris3t..
+HIM IILWEJEGIEN‘NII);
+HKBIOOO RILEMI. "lNeKrl"t "teLEA8e.8EotEtrrt"t..
+:szIOOO RELEASE . SEWER" BO) :RELEASI. SEGIENNB‘ lt
+END
+ie-----------------------.-
+-'-"------------------L-._.=
+
+mom: MANCHESTER UNIVERSITY - CONFIDENTIAL 00001.3“,0)
+Figaro " Y.DOC0tttt tt August 1982
+
+ii,
+,
+
+ 
+
+
+
+
+    
+   
+ 
+    
+ 
+ 
+    
+   
+ 
+  
+
+1
+LIST D1CrttHer.t)urFlt.Er
+
+  
+
+a
+SELECT OUTPUT OUT?! LE
+
+  
+
+l
+READ NAMES FRO" nlCT
+[00601.5.“
+
+         
+
+3
+SELECT ORIGINAL WRIT
+
+WHITDR - INDEX TOO BIG
+
+ 
+
+:uoen: MANCHESTER UNIVERSITY - CONFIDENTIAL 0000341151"
+Figure " ?.WCOHOI’ tt August 1982
+
+ 
+
+
+
+
+ 
+
+MIMIUZ
+
+ 
+
+1
+
+PROD LIST.DICTIDIBT,OUTFILEI;
+5m 'rsr.rtimtrc0orr.ctmor.ourotsr.remxsr:
+ttPDP SW 5:52.33:
+-PDP CREAmseamrt-t.sasom "W'tr't"-r8t.4,tt;
+PDF CteEArE.ssurerrrt-t .IZGDGJ 'rttAPitMt-pS2.8. 1 l:
+POP "EA""r""rtret.seootorserussa.is.1j;
+m REuEAse.semrertrtsst;
+mm CttEATr.sEuetrrrsa.stoootrt;
+
+ICGSDOO iteLEA3E.SEotENrt4t" :HELEASE. sEGIIENTHB) 2
+
+::IICEEOOO REL6ASE.sti-rfstrt ;RaEAs0testrEttrI6tt;
+",atttrtttt00t' CREATE.5EG‘IENTH&,$AOOOI MmeATEssEaimrt".s4oot" ;
+
+$68000 tmEAri.sstaesrtroo.saooo, JCR8ATE.SEGirttil "Moot '
+HCIEODO '"''t".lotr1"Pto-t.otsttAraitso.-, rotrtdAP_tnt
+
+s
+CImRErmWrrurt l->0L0wT:
+r.s..5Ee'i..'l.tEttFeumrret,msTrtLsro,tu.1o,ororemxm..
+
+u
+
+2
+IF "A'oA1est0utteisr.trtcisTt < 0
+
+ 
+ 
+  
+
+   
+
+ERDotJTPurtNEmtt-i
+MLBmXm'trrtttutthrry;
+CAP1'IONII'3LINOEX T00 BIG']:
+
+3
+1ttMrmA1'rrtrctrtor.mcitrrt..
+
+ 
+      
+ 
+   
+  
+ 
+ 
+ 
+  
+ 
+ 
+ 
+ 
+ 
+  
+
+" I) tt;
+
+-, " t I) CHILLET:
+
+NHL! NLISTE'H)” " J " 0 90
+
+" CNLISTLJ} " WFLLET THEN
+puusrrJ} a; CtJRVT;
+RMIBESUh-I " COUNT;
+
+Fl
+" tyy m? I 3 i o THE" REIMNESU] Ft
+J + K II) a:
+" “IL: “LIST! 1+)J-1] I) SYI " 0 DO
+thI:
+00
+
+FOR [-in DB m1' '1 00
+0b
+
+  
+ 
+ 
+ 
+
+T
+
+MLetr'0urrtrrtourourtt
+'itt000mrrtrmRxtttt,.
+
+'
+PD! 'l'HAsr"eta"r'rtstttr-setsttmriazt..
+P'DP MkEMe.MtamtrtttN;
+W! It"eA8EitWorErtrtgat:
+“88000 RELEASE . SEMNTHS} :RELEASE. SEGMENTHB};
+”3000 ""ases"6"rrHsotrttoasr.seittmtTtstt..
+w
+
+"i,"'""-"''-.-"----------.-,--.-
+
+e
+
+J
+
+MANCHESTER UNIVERSITY - CONFIDENTIAL
+Figure " ?.BOCOHH tr August t982
+
+m:.4'n.n
+
+ 
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+    
+   
+ 
+    
+     
+      
+
+ 
+
+1
+comma PMCS
+
+2 h
+umumazwmnmu
+sour unnas [noco1.5.11
+
+ 
+
+   
+
+ 
+
+ 
+
+ 
+
+ 
+
+   
+
+tum“: MANCHESTER UNIVERSITY - CONFIDENTIAL manLn_
+_ Figures rs ?.DOCOHOI 8'August I982 _
+
+ 
+
+
+
+
+ 
+
+mom: MANCHESTER UNIVERSITY - CONFIDENTIAL coconann)
+Figure ta Y.DOC0tttt 6 August 1902
+
+ 
+
+ 
+
+
+
+
+    
+
+        
+    
+
+IHITtALrM PDIN'I'ERS
+SELECT FRAME " "tpor
+
+ 
+         
+   
+    
+    
+
+HEAD AND STORE UNTIL
+START OF HARE
+
+     
+      
+     
+   
+  
+    
+      
+
+'
+SELEET ORIGINAL INPUT
+END
+
+----..--------
+
+ 
+ 
+
+HM FOR MORE MS?
+
+ 
+       
+
+I
+SET RESULT FAULTY
+
+ 
+
+14x00": MANCHESTER UNIVERSITY - CONFIDENTIAL tblxl0t.S.ttt
+Figure M KDOCOHOI ' August I932
+
+ 
+
+
+
+
+_ ,
+i _ P300 "ahNAs'EstFttAisusT,rtursr):
+a 5m '.d.eutttt4,ttewm.tmt;
+
+”PEI? SLI CttLl6TNt6tt0tt.HLttrigotxt
+
+HIUG $Lt Cht.1sTzuo0otLrtLtsTtusoots;
+RICEBOOO 5L! Cisfzr"ooofr,ttiusTzoooo;
+
+  
+   
+    
+    
+  
+      
+   
+  
+
+  
+
+D nu) READJIAIES:
+
+'M-rl;
+1-5.1;
+
+C1Jmetrrrtir'urtt " WIN:
+_s5"er"l'urttrErmetreurt-t.mAtts.orot-u,
+
+ 
+ 
+
+3
+
+IHILE IENOHIiC I U AND Urmul.ocrcrewtoer.r, 4 'A
+OR CHLIS'H‘IJ} y '2] oo OD
+IF IENHI‘IC " 0
+
+ 
+    
+  
+
+4
+u " NLlS‘Rf‘H-M]:
+
+ 
+   
+     
+   
+   
+    
+   
+ 
+  
+    
+       
+ 
+  
+
+HIRE 1mg)“: I 0 mo t1HCt4ft-ttm' a '. OR
+SYN >n'A -<‘2 OR '" "" n<‘:] DO
+
+SYII " CHUSFPUi-N]:
+on
+
+tt n) uiusn-[Hw]:
+SYI " CRLIS’RIHMI:
+
+IF lENOHi‘IC " Q
+
+"ketmRPortCuttutt;
+EHtrtNMrrtretrttt,ot;
+
+  
+ 
+
+,
+" .I < CHUSTZ m I E MUST?
+
+ 
+
+  
+   
+ 
+
+I
+-t " HENLWES:
+
+ 
+
+"mum MANCHESTER UNIVERSITY - CONFIDENTIAL
+Figure " 7.0000}!!! tf August 1982
+
+mumm.“
+
+ 
+
+
+
+
+  
+    
+
+SET POINTER To START or um: um
+gttr imam: comrr 22m
+
+ 
+ 
+   
+   
+
+E mm
+
+   
+
+.. our or okay:
+
+4
+
+INTEWE NAME HST ENTRIES
+INCHEIIENT COUNT
+
+  
+     
+ 
+ 
+  
+
+  
+
+5
+SEL EC? MAT NAME
+
+  
+
+.53
+14x00“: MANCHESTER UNIVERSITY - CONFIDENTIAL m:.s.zu.n
+Figure 20 r. 0000170} d August I982
+
+ 
+
+ 
+
+
+
+
+ 
+
+t
+
+F1106 tmRCrlAME8tCHLittiSTtt
+SIN I.CUJNT.K.N.5YHA.SWB:
+
+ 
+   
+
+  
+
+2
+0-) I " COUNT;
+
+  
+     
+ 
+
+KLtSTWtt1-, " At
+'iLls8tt+11-1 " N:
+
+NEXT.HAHE:
+
+FILE GIUSHII»K]->s_w.l - ', m
+WHILE CteltrWrttir8Yhm . ', Du
+" m1 CI l»
+
+" m " Mr) RENE:
+tF SM ( 5W3 "t
+
+ 
+   
+ 
+  
+
+GD
+GD
+
+ 
+   
+   
+    
+ 
+  
+
+4
+
+   
+
+I “Em! I
+
+numm " kt
+NLlsn-(mg " msnm:
+
+K II) HLISWU‘H]:
+I " cm:
+
+    
+    
+    
+ 
+ 
+
+  
+ 
+
+" HLIS'H{I+)I+I} " O
+
+  
+
+,
+END
+
+ 
+
+“men: MANCHESTER UNIVERSITY - CONFIDENTIAL 00601.5.211JI
+Figaro 20 ?.DOCOHH 6 August 1982
+
+ 
+
+
+
+
+ 
+   
+       
+
+   
+   
+
+t
+LIST IIODULEIIGOWLE';
+
+ 
+  
+
+2 .
+HEIEIIBER CURRENT U0 STREAMS
+
+DEFINE M INPUT STREAM TO THE WLE
+DEFINE AN OUTPUT STREAM TO THE LIHEPRIKTEH
+
+   
+   
+     
+        
+       
+  
+  
+     
+
+3 _
+TEX? IDDULE " LIHEPRtKTmV
+
+      
+     
+  
+  
+    
+  
+      
+
+4
+
+CREATE DRAW cm STREAM Ott CURRENT FILE
+ttRN' FILE AT BOTH LEVELS TO THE LtHEPttlHTtft
+
+   
+     
+
+   
+
+END tho
+SELECT ORIGML H0
+
+  
+
+ 
+
+mom: _ MANCHESTER UNIVERSITY - CONFIDENTIAL
+Figure 2t ?.DOCOHOI 6 August I982
+
+
+
+
+NJOGIII
+
+1
+met: us‘nmbmua:
+5m '0Lt)tmuu30ttteteirt,remur,rsttt..
+sLI/wtsmal uuu. J
+sums] 19mm:
+30.0 anisma:
+" " 'T "
+
+END
+
+   
+       
+
+" 1mm] -.> canto]:
+"T " a-s-mu] " 05mm):
+'R " ISTRHJ " 05mm:
+" " Ismu] " 0min}.-
+CWtMHttWrP0rtpoauytWrr
+wmam mpun 1mm: t N:
+o"""ihm'urt-rsrmoiirrttt.o-our.rosma1,
+uerme-mwnn .FI LE.thoHore'rmio'ltrrrtta.r;
+SEuiCr0urr'irrtMrtre01m'urt-t .MJLL..0. u. 10.0:u1'sm} '
+mannu-ALLsu-I: _
+srttsurris1trtursrmoit
+tm'rrelrlrurt-t "lULL.trfyTTmtt
+"LECtthm'ttrNuxxrrt l
+
+        
+       
+    
+    
+     
+ 
+
+h
+
+ 
+ 
+    
+ 
+     
+ 
+
+3
+Tmnlmnosm. "Lt'rVJW.Nut,bt;
+
+ 
+ 
+   
+
+  
+
+4
+ssunmmnsm: l
+0mmsm.+nm,-I. 'LPT'}:
+
+ 
+   
+ 
+     
+ 
+
+I
+mmmmm;
+meamqunmm;
+'tttrtM'uriTsrlt.tttt
+"LECr.O0rPtrrfttutt m '
+suacrmmmwma;
+
+ 
+      
+     
+
+I
+E!”
+
+MANCHESTER UNIVERSITY - CONFIDENTIAL
+Figure 2! £00627}!!! ttAugust T982
+
+00001.0“.01
+
+ 
+
+ 
+
+
+
+

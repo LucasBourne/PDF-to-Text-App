@@ -1,0 +1,29 @@
+CHAPTER tt - COMMAND INTERPRETERS
+
+6. l INTRODUCTION
+
+The basic command Interpreter PPC.SEQ merely calls PPC.CMD to process
+single commands which specify the name and parameters of any library
+procedure. However. it also provides the means by which other more
+sophisticated command Interpreters can make interpretive calls on library
+procedures. One such command interpreter will be added to issue " of
+MUSS which will provide for example
+
+1) control structures
+
+IF THEN ELSE
+
+WHILE
+
+FOR
+2) named variables of any type
+3) 'wild cardlng' of file names.
+
+it is also possible to compile and run a standard UNIX shell under MUSS
+and this is described in Volume 3.
+
+ 
+
+
+
+
