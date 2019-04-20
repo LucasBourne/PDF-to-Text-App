@@ -30,15 +30,23 @@ namespace WpfApp1
         {
             //var Result = Ocr.Read(@".\Input\DOC01100.pdf");
             //string text = Result.Text;
+            UpdatesListBox.Items.Clear();
+            WriteText("File processing started");
+
             var pdfFiles = Directory.GetFiles("./Input", "*.pdf");
-            string filePath = pdfFiles[0];
-            string text = PerformOCR(filePath);
-            WriteText(WriteOutput(filePath, text));
+            foreach (var file in pdfFiles)
+            {
+                string filePath = file;
+                string text = PerformOCR(filePath);
+
+                WriteText(WriteOutput(filePath, text));
+            }
         }
 
         private void WriteText(string text)
         {
             UpdatesListBox.Items.Add(DateTime.Now.ToString("HH:mm:ss") + ": " + text);
+            UpdatesListBox.Items.Refresh();
         }
 
        IronOcr.AdvancedOcr Ocr = new IronOcr.AdvancedOcr()
