@@ -65,17 +65,22 @@ namespace WpfApp1
             foreach (var file in pdfFiles)
             {
                 string filePath = file;
-                string text = PerformOCR(filePath);
+                string roughText = PerformOCR(filePath);
+                string cleanText = PerformCorrections(roughText);
 
-                WriteText(WriteOutput(filePath, text));
+                WriteText(WriteOutput(filePath, cleanText));
             }
         }
+
+
 
         private void WriteText(string text)
         {
             UpdatesListBox.Items.Add(DateTime.Now.ToString("HH:mm:ss") + ": " + text);
             UpdatesListBox.Items.Refresh();
         }
+
+
 
        IronOcr.AdvancedOcr Ocr = new IronOcr.AdvancedOcr()
         {
@@ -94,9 +99,25 @@ namespace WpfApp1
 
         private string PerformOCR(string filePath)
         {
+            WriteText("Processing file '" + System.IO.Path.GetFileNameWithoutExtension(filePath) + "'...");
             var result = Ocr.Read(filePath);
+            WriteText("File '" + System.IO.Path.GetFileNameWithoutExtension(filePath) + "' converted to text");
             return result.Text;
         }
+
+
+
+        private string PerformCorrections(string roughText)
+        {
+            string cleanedText = roughText;
+            foreach (var item in corrections)
+            {
+                cleanedText = cleanedText.Replace(item.Key, item.Value);
+            }
+            return cleanedText;
+        }
+
+
 
         private string WriteOutput(string filePath, string text)
         {
