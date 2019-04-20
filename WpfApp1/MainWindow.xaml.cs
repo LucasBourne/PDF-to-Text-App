@@ -24,7 +24,35 @@ namespace WpfApp1
         public MainWindow()
         {
             InitializeComponent();
+            LoadCorrections("corrections.txt");
         }
+
+        private Dictionary<string, string> corrections = new Dictionary<string, string>();
+        private void LoadCorrections(string correctionsFile)
+        {
+            string file = correctionsFile;
+            using (StreamReader reader = new StreamReader(file, Encoding.ASCII))
+            {
+                int lineCount = File.ReadAllLines(file).Length;
+                try
+                {
+                    for (int i = 0; i < lineCount; ++i)
+                    {
+                        string wholeLine = reader.ReadLine();
+                        string[] lineInfo = wholeLine.Split('-');
+                        string wrong = lineInfo[0].Trim();
+                        string right = lineInfo[1].Trim();
+                        corrections.Add(wrong, right);
+                    }
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show("ERROR: While parsing translation corrections the following error occured: " + e.Message);
+                }
+            }
+        }
+
+
 
         private void OCRButton_Click(object sender, RoutedEventArgs e)
         {
