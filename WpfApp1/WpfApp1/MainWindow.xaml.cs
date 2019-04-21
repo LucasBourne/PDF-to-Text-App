@@ -28,6 +28,10 @@ namespace WpfApp1
         }
 
         private Dictionary<string, string> corrections = new Dictionary<string, string>();
+        /// <summary>
+        /// Method to load in corrections from the corrections text file
+        /// </summary>
+        /// <param name="correctionsFile">Name of the corrections file</param>
         private void LoadCorrections(string correctionsFile)
         {
             string file = correctionsFile;
@@ -53,11 +57,9 @@ namespace WpfApp1
         }
 
 
-
+        
         private void OCRButton_Click(object sender, RoutedEventArgs e)
         {
-            //var Result = Ocr.Read(@".\Input\DOC01100.pdf");
-            //string text = Result.Text;
             UpdatesListBox.Items.Clear();
             WriteText("File processing started");
 
@@ -73,11 +75,14 @@ namespace WpfApp1
         }
 
 
-
+        /// <summary>
+        /// Method for writing text out to the listBox
+        /// </summary>
+        /// <param name="text">Text to be written to the listBox</param>
         private void WriteText(string text)
         {
             UpdatesListBox.Items.Add(DateTime.Now.ToString("HH:mm:ss") + ": " + text);
-            UpdatesListBox.Items.Refresh();
+            UpdatesListBox.UpdateLayout();
         }
 
 
@@ -96,7 +101,11 @@ namespace WpfApp1
             ReadBarCodes = false,
             ColorDepth = 4
         };
-
+        /// <summary>
+        /// Method to handle OCR manipulation of PDFs
+        /// </summary>
+        /// <param name="filePath">File path to PDF document</param>
+        /// <returns></returns>
         private string PerformOCR(string filePath)
         {
             WriteText("Processing file '" + System.IO.Path.GetFileNameWithoutExtension(filePath) + "'...");
@@ -106,7 +115,11 @@ namespace WpfApp1
         }
 
 
-
+        /// <summary>
+        /// Method to check processed text against the corrections text file
+        /// </summary>
+        /// <param name="roughText">Unclean text from OCR processing</param>
+        /// <returns></returns>
         private string PerformCorrections(string roughText)
         {
             string cleanedText = roughText;
@@ -118,7 +131,12 @@ namespace WpfApp1
         }
 
 
-
+        /// <summary>
+        /// Method to export clean text to suitably-named text files
+        /// </summary>
+        /// <param name="filePath">File parth to original PDF document</param>
+        /// <param name="text">Text to be written to text file</param>
+        /// <returns></returns>
         private string WriteOutput(string filePath, string text)
         {
             string fileName = System.IO.Path.GetFileNameWithoutExtension(filePath);
