@@ -5,10 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp1"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="590.757">
+        SizeToContent="Manual"
+        Title="OCR Application" Height="450" Width="590.757">
+
     <Grid>
         <Button x:Name="OCR_Button" Content="OCR" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="75" Click="OCRButton_Click"/>
-        <ListBox x:Name="UpdatesListBox" HorizontalAlignment="Left" Height="374" Margin="10,35,0,0" VerticalAlignment="Top" Width="563" IsSynchronizedWithCurrentItem="True"/>
+        <ListBox x:Name="UpdatesListBox" HorizontalAlignment="Left" Height="374" Margin="10,35,0,0" VerticalAlignment="Top" Width="563" ItemsSource="{Binding Collection}"/>
 
     </Grid>
 </Window>

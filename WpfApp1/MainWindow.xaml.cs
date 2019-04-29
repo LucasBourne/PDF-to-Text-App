@@ -13,17 +13,22 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.IO;
+using System.Collections.ObjectModel;
 
 namespace WpfApp1
 {
+
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window
     {
+        public ObservableCollection<string> Collection { get; set; }
         public MainWindow()
         {
             InitializeComponent();
+            Collection = new ObservableCollection<string>();
+            this.DataContext = this;
             LoadCorrections("corrections.txt");
         }
 
@@ -60,7 +65,7 @@ namespace WpfApp1
         
         private void OCRButton_Click(object sender, RoutedEventArgs e)
         {
-            UpdatesListBox.Items.Clear();
+            Collection.Clear();
             WriteText("File processing started");
 
             var pdfFiles = Directory.GetFiles("./Input", "*.pdf");
@@ -68,10 +73,13 @@ namespace WpfApp1
             {
                 string filePath = file;
                 string roughText = PerformOCR(filePath);
+                WriteText("Cleaning file '" + System.IO.Path.GetFileNameWithoutExtension(filePath) + "'...");
                 string cleanText = PerformCorrections(roughText);
-
+                WriteText("File '" + System.IO.Path.GetFileNameWithoutExtension(filePath) + "' cleaned successfully");
                 WriteText(WriteOutput(filePath, cleanText));
             }
+
+            WriteText("All files processed.");
         }
 
 
@@ -81,8 +89,7 @@ namespace WpfApp1
         /// <param name="text">Text to be written to the listBox</param>
         private void WriteText(string text)
         {
-            UpdatesListBox.Items.Add(DateTime.Now.ToString("HH:mm:ss") + ": " + text);
-            UpdatesListBox.UpdateLayout();
+            Collection.Add(DateTime.Now.ToString("HH:mm:ss") + ": " + text);
         }
 
 
